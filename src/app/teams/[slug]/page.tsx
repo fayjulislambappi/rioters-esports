@@ -112,6 +112,16 @@ export default function TeamProfile() {
                     </div>
 
                     <div className="flex gap-4 mt-6 md:mt-0">
+                        {team.socials?.discord && (
+                            <Link href={team.socials.discord} target="_blank">
+                                <Button variant="neon" size="sm" className="bg-[#5865F2]/20 text-[#5865F2] border-[#5865F2]/50 hover:bg-[#5865F2]/40">
+                                    <span className="w-4 h-4 mr-2 inline-block fill-current">
+                                        <svg viewBox="0 0 127.14 96.36" className="w-full h-full"><path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.11,77.11,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1A105.25,105.25,0,0,0,126.6,80.22c.12-9.23-1.69-19-4.89-27.42C118.52,43.27,113.88,24.78,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5-12.74,11.44-12.74S96.23,46,96.12,53,91.08,65.69,84.69,65.69Z" /></svg>
+                                    </span>
+                                    Discord
+                                </Button>
+                            </Link>
+                        )}
                         {team.socials?.twitter && (
                             <Link href={`https://twitter.com/${team.socials.twitter}`} target="_blank">
                                 <Button variant="outline" size="sm">
@@ -146,6 +156,50 @@ export default function TeamProfile() {
                     ) : (
                         <div className="bg-white/5 border border-white/10 rounded-xl p-12 text-center text-white/20 italic font-bold">
                             No roster members yet.
+                        </div>
+                    )}
+
+                    {/* Starting Lineup Section (from Team Creation) */}
+                    {team.lineup && team.lineup.length > 0 && (
+                        <div className="mb-12">
+                            <h3 className="text-xl font-bold uppercase mb-6 flex items-center text-white/60">
+                                <Users className="w-5 h-5 mr-3" /> Starting Lineup
+                            </h3>
+                            <div className="flex flex-wrap gap-4">
+                                {team.lineup.map((player: string, i: number) => (
+                                    <div key={i} className="bg-primary/5 border border-primary/20 rounded-lg px-6 py-4 flex items-center min-w-[200px]">
+                                        <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center mr-4 text-primary font-bold">
+                                            {i + 2}
+                                        </div>
+                                        <div>
+                                            <span className="block font-bold uppercase text-lg text-primary">{player}</span>
+                                            <span className="text-[10px] text-white/40 uppercase tracking-widest">Main Roster</span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Substitutes Section */}
+                    {team.substitutes && team.substitutes.length > 0 && (
+                        <div className="mt-12">
+                            <h3 className="text-xl font-bold uppercase mb-6 flex items-center text-white/60">
+                                <Users className="w-5 h-5 mr-3" /> Substitutes / Reserves
+                            </h3>
+                            <div className="flex flex-wrap gap-4">
+                                {team.substitutes.map((sub: string, i: number) => (
+                                    <div key={i} className="bg-white/5 border border-white/10 rounded-lg px-6 py-4 flex items-center">
+                                        <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center mr-4">
+                                            <Users className="w-5 h-5 text-white/40" />
+                                        </div>
+                                        <div>
+                                            <span className="block font-bold uppercase text-sm">{sub}</span>
+                                            <span className="text-[10px] text-white/40 uppercase tracking-widest">Reserve</span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     )}
                 </div>

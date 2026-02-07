@@ -64,7 +64,7 @@ export default function GamesPage() {
                             image={game.coverImage}
                             category={game.category}
                             slug={game.slug}
-                            tournamentsCount={0}
+                            tournamentsCount={game.tournamentsCount || 0}
                         />
                     ))}
                 </div>

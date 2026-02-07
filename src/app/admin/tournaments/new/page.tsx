@@ -111,14 +111,32 @@ export default function CreateTournamentPage() {
                             </select>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-bold uppercase text-white/60 mb-2">Start Date</label>
                                 <Input
-                                    type="date"
+                                    type="datetime-local"
                                     required
                                     value={formData.startDate}
                                     onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-bold uppercase text-white/60 mb-2">End Date</label>
+                                <Input
+                                    type="datetime-local"
+                                    required
+                                    value={formData.endDate}
+                                    onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-bold uppercase text-white/60 mb-2">Registration Deadline</label>
+                                <Input
+                                    type="datetime-local"
+                                    required
+                                    value={formData.registrationDeadline}
+                                    onChange={(e) => setFormData({ ...formData, registrationDeadline: e.target.value })}
                                 />
                             </div>
                             <div>

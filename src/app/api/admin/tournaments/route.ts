@@ -12,7 +12,7 @@ export async function GET() {
             await connectDB();
             const tournaments = await Tournament.find({ status: { $ne: "COMPLETED" } })
                 .populate("gameId", "title")
-                .sort({ date: 1 });
+                .sort({ startDate: 1 });
             return NextResponse.json(tournaments);
         }
 

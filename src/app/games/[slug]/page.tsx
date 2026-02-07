@@ -1,51 +1,47 @@
-"use client";
-
-import { useParams } from "next/navigation";
+import { notFound } from "next/navigation";
 import Image from "next/image";
 import Button from "@/components/ui/Button";
 import Link from "next/link";
-import { MoveLeft, Trophy, Users, Calendar } from "lucide-react";
+import { MoveLeft, Trophy, Users, Calendar, AlertCircle } from "lucide-react";
+import connectDB from "@/lib/db";
+import Game from "@/models/Game";
+import Tournament from "@/models/Tournament";
 
-// Mock Data
-const gameDetails = {
-    slug: "valorant",
-    title: "Valorant",
-    description: "A 5v5 character-based tactical shooter where precise gunplay meets unique agent abilities. Valorant is the fastest growing esport in the world.",
-    coverImage: "https://images.unsplash.com/photo-1624138784181-dc7cc7539698?q=80&w=1500&auto=format&fit=crop",
-    category: "FPS",
-    platforms: ["PC"],
-    publisher: "Riot Games",
-    activeTournaments: [
-        {
-            id: 1,
-            title: "Valorant Champions 2024",
-            date: "Aug 15, 2024",
-            prize: "$10,000",
-            teams: "16/32",
-            image: "https://images.unsplash.com/photo-1624138784181-dc7cc7539698?q=80&w=500&auto=format&fit=crop",
-        },
-        {
-            id: 5,
-            title: "Valorant Community Cup",
-            date: "Every Friday",
-            prize: "$200",
-            teams: "Open",
-            image: "https://images.unsplash.com/photo-1624138784181-dc7cc7539698?q=80&w=500&auto=format&fit=crop",
-        }
-    ]
-};
+// Force dynamic rendering to ensure fresh data on every request
+export const dynamic = "force-dynamic";
 
-export default function GameDetails() {
-    const params = useParams();
-    // In real app, fetch game by params.slug
+export default async function GameDetails({ params }: { params: Promise<{ slug: string }> }) {
+    const { slug } = await params;
+    await connectDB();
+
+    // 1. Fetch Game Details
+    const game = await Game.findOne({ slug }).lean();
+
+    if (!game) {
+        return notFound();
+    }
+
+    // 2. Fetch Active Tournaments for this Game
+    // Show UPCOMING and ONGOING tournaments, sorted by accumulated urgency
+    const tournaments = await Tournament.find({
+        gameId: game._id,
+        status: { $in: ["UPCOMING", "ONGOING"] }
+    }).sort({ startDate: 1 }).lean();
+
+    // Helper to format currency if it's a number, or just show string
+    const formatPrize = (prize: any) => {
+        if (typeof prize === 'string') return prize;
+        if (typeof prize === 'object' && prize.total) return prize.total;
+        return "TBD";
+    };
 
     return (
         <div className="min-h-screen pb-20">
             {/* Hero Banner */}
             <div className="relative h-[500px] w-full">
                 <Image
-                    src={gameDetails.coverImage}
-                    alt={gameDetails.title}
+                    src={game.coverImage || "/hero-bg.jpg"}
+                    alt={game.title}
                     fill
                     className="object-cover"
                     priority
@@ -60,10 +56,10 @@ export default function GameDetails() {
                         </span>
                     </Link>
                     <span className="inline-block py-1 px-3 rounded bg-primary/20 border border-primary/20 text-primary text-xs font-bold uppercase tracking-widest mb-4 w-fit">
-                        {gameDetails.category}
+                        {game.category || "Esports"}
                     </span>
-                    <h1 className="text-5xl md:text-7xl font-black uppercase tracking-tighter mb-6 text-glow">{gameDetails.title}</h1>
-                    <p className="text-lg text-white/80 max-w-2xl">{gameDetails.description}</p>
+                    <h1 className="text-5xl md:text-7xl font-black uppercase tracking-tighter mb-6 text-glow">{game.title}</h1>
+                    <p className="text-lg text-white/80 max-w-2xl">{game.description}</p>
                 </div>
             </div>
 
@@ -75,30 +71,57 @@ export default function GameDetails() {
                     </Link>
                 </div>
 
-                <div className="grid gap-6">
-                    {gameDetails.activeTournaments.map((tournament) => (
-                        <div key={tournament.id} className="bg-white/5 border border-white/5 rounded-xl p-6 flex flex-col md:flex-row items-center hover:border-primary/50 transition-colors">
-                            <div className="relative w-full md:w-48 h-32 rounded-lg overflow-hidden shrink-0 mb-4 md:mb-0 md:mr-8">
-                                <Image fill src={tournament.image} alt={tournament.title} className="object-cover" />
-                            </div>
+                {tournaments.length > 0 ? (
+                    <div className="grid gap-6">
+                        {tournaments.map((tournament: any) => (
+                            <div key={tournament._id} className="bg-white/5 border border-white/5 rounded-xl p-6 flex flex-col md:flex-row items-center hover:border-primary/50 transition-colors">
+                                <div className="relative w-full md:w-48 h-32 rounded-lg overflow-hidden shrink-0 mb-4 md:mb-0 md:mr-8 bg-black/50">
+                                    <Image
+                                        fill
+                                        src={tournament.image || game.coverImage || "/logo.png"}
+                                        alt={tournament.title}
+                                        className="object-cover"
+                                    />
+                                </div>
 
-                            <div className="flex-1">
-                                <h3 className="text-xl font-bold uppercase mb-2">{tournament.title}</h3>
-                                <div className="flex flex-wrap gap-4 text-sm text-white/60">
-                                    <span className="flex items-center"><Calendar className="w-4 h-4 mr-2" /> {tournament.date}</span>
-                                    <span className="flex items-center"><Trophy className="w-4 h-4 mr-2 text-yellow-500" /> {tournament.prize}</span>
-                                    <span className="flex items-center"><Users className="w-4 h-4 mr-2" /> {tournament.teams}</span>
+                                <div className="flex-1">
+                                    <h3 className="text-xl font-bold uppercase mb-2">{tournament.title}</h3>
+                                    <div className="flex flex-wrap gap-4 text-sm text-white/60">
+                                        <span className="flex items-center">
+                                            <Calendar className="w-4 h-4 mr-2" />
+                                            {new Date(tournament.startDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                                        </span>
+                                        <span className="flex items-center">
+                                            <Trophy className="w-4 h-4 mr-2 text-yellow-500" />
+                                            {formatPrize(tournament.prizePool)}
+                                        </span>
+                                        <span className="flex items-center">
+                                            <Users className="w-4 h-4 mr-2" />
+                                            {tournament.registeredTeams?.length || 0} / {tournament.maxTeams} Teams
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div className="mt-4 md:mt-0 flex flex-col items-center gap-2">
+                                    <div className={`px-2 py-1 rounded text-[10px] font-bold uppercase border ${tournament.status === 'ONGOING' ? 'bg-green-500/20 text-green-400 border-green-500/20' : 'bg-blue-500/20 text-blue-400 border-blue-500/20'}`}>
+                                        {tournament.status}
+                                    </div>
+                                    <Link href={`/tournaments/${tournament._id.toString()}`}>
+                                        <Button variant="primary">View Details</Button>
+                                    </Link>
                                 </div>
                             </div>
-
-                            <div className="mt-4 md:mt-0">
-                                <Link href={`/tournaments/${tournament.id}`}>
-                                    <Button variant="primary">Join Tournament</Button>
-                                </Link>
-                            </div>
-                        </div>
-                    ))}
-                </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="py-12 text-center border border-dashed border-white/10 rounded-xl bg-white/5">
+                        <AlertCircle className="w-12 h-12 text-white/20 mx-auto mb-4" />
+                        <h3 className="text-xl font-bold uppercase text-white/40 mb-2">No Active Tournaments</h3>
+                        <p className="text-white/30 max-w-md mx-auto">
+                            There are currently no upcoming tournaments for {game.title}. Check back later or browse other games!
+                        </p>
+                    </div>
+                )}
             </div>
         </div>
     );

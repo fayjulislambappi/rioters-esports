@@ -7,6 +7,8 @@ export interface ITeam extends Document {
     description?: string;
     captainId: mongoose.Types.ObjectId;
     members: mongoose.Types.ObjectId[]; // Includes captain
+    lineup?: string[];
+    substitutes?: string[];
     gameFocus?: string; // Primary game they play
     recruiting: boolean;
     socials?: {
@@ -26,6 +28,8 @@ const TeamSchema = new Schema<ITeam>(
         members: [{ type: Schema.Types.ObjectId, ref: "User" }],
         gameFocus: { type: String, required: true },
         recruiting: { type: Boolean, default: false },
+        lineup: [{ type: String }], // Main roster IGNs (Captain + 4 others for 5v5)
+        substitutes: [{ type: String }], // Array of IGNs for subs
         socials: {
             discord: String,
             twitter: String,

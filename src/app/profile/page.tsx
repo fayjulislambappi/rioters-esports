@@ -1,7 +1,9 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
+import Link from "next/link";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import { User, Settings, LogOut, Shield, Trophy } from "lucide-react";
@@ -9,6 +11,27 @@ import { signOut } from "next-auth/react";
 
 export default function ProfilePage() {
     const { data: session } = useSession();
+    const [user, setUser] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchUser = async () => {
+            if (session?.user?.id) {
+                try {
+                    const res = await fetch("/api/user/me");
+                    if (res.ok) {
+                        const data = await res.json();
+                        setUser(data);
+                    }
+                } catch (error) {
+                    console.error("Failed to fetch user");
+                } finally {
+                    setLoading(false);
+                }
+            }
+        };
+        fetchUser();
+    }, [session]);
 
     if (!session) {
         return (
@@ -42,7 +65,7 @@ export default function ProfilePage() {
 
                         <h1 className="text-2xl font-black uppercase tracking-wider mb-1">{session.user?.name}</h1>
                         <span className="text-xs font-bold bg-primary/20 text-primary py-1 px-3 rounded uppercase border border-primary/20 mb-6">
-                            {session.user?.role || "Agent"}
+                            {user?.role || session.user?.role || "Agent"}
                         </span>
 
                         <div className="w-full space-y-3">
@@ -68,7 +91,7 @@ export default function ProfilePage() {
                         </Card>
                         <Card className="p-6 text-center border-secondary/20">
                             <Shield className="w-8 h-8 text-secondary mx-auto mb-2" />
-                            <div className="text-2xl font-black">Member</div>
+                            <div className="text-2xl font-black">{loading ? "..." : (user?.teamId ? "Member" : "Free Agent")}</div>
                             <div className="text-xs uppercase font-bold text-white/40">Team Role</div>
                         </Card>
                         <Card className="p-6 text-center border-secondary/20">
@@ -90,16 +113,40 @@ export default function ProfilePage() {
 
                     {/* Team Status */}
                     <div className="space-y-4">
-                        <div className="flex justify-between items-center bg-white/5 p-4 rounded-lg">
-                            <div className="flex items-center">
-                                <Shield className="w-10 h-16 mr-4 text-white/20" />
-                                <div>
-                                    <h3 className="font-bold uppercase">No Team</h3>
-                                    <p className="text-sm text-white/60">You are currently a free agent.</p>
+                        {loading ? (
+                            <div className="bg-white/5 p-4 rounded-lg animate-pulse h-24"></div>
+                        ) : user?.teamId ? (
+                            <div className="flex justify-between items-center bg-primary/10 border border-primary/20 p-4 rounded-lg">
+                                <div className="flex items-center">
+                                    <Shield className="w-10 h-16 mr-4 text-primary" />
+                                    <div>
+                                        <h3 className="font-bold uppercase text-primary">{user.teamId.name || "Your Team"}</h3>
+                                        <p className="text-sm text-white/60">Manage your roster and matches.</p>
+                                    </div>
+                                </div>
+                                <Link href={`/teams/${user.teamId.slug}`}>
+                                    <Button variant="primary" size="sm">Go to Team HQ</Button>
+                                </Link>
+                            </div>
+                        ) : (
+                            <div className="flex justify-between items-center bg-white/5 p-4 rounded-lg">
+                                <div className="flex items-center">
+                                    <Shield className="w-10 h-16 mr-4 text-white/20" />
+                                    <div>
+                                        <h3 className="font-bold uppercase">No Team</h3>
+                                        <p className="text-sm text-white/60">You are currently a free agent.</p>
+                                    </div>
+                                </div>
+                                <div className="flex gap-4">
+                                    <Link href="/teams">
+                                        <Button variant="neon" size="sm">Find Team</Button>
+                                    </Link>
+                                    <Link href="/teams/create">
+                                        <Button variant="primary" size="sm">Create Team</Button>
+                                    </Link>
                                 </div>
                             </div>
-                            <Button variant="neon" size="sm">Find Team</Button>
-                        </div>
+                        )}
                     </div>
 
                 </div>

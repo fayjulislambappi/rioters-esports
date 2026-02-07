@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/db";
 import Game from "@/models/Game";
+import Tournament from "@/models/Tournament";
 
 export const dynamic = "force-dynamic";
 
@@ -10,13 +11,26 @@ export async function GET() {
     try {
         await connectDB();
         const games = await Game.find({}).sort({ title: 1 });
+
+        // Aggregate active tournaments count per game
+        const activeTournaments = await Tournament.aggregate([
+            { $match: { status: { $in: ["UPCOMING", "ONGOING"] } } },
+            { $group: { _id: "$gameId", count: { $sum: 1 } } }
+        ]);
+
+        const tournamentCounts: { [key: string]: number } = {};
+        activeTournaments.forEach((t: any) => {
+            tournamentCounts[t._id.toString()] = t.count;
+        });
+
         // Map to include defaults if missing in DB
-        const sanitizedGames = games.map(g => {
+        const sanitizedGames = games.map((g: any) => {
             const obj = g.toObject ? g.toObject() : g;
             return {
                 ...obj,
                 isFeatured: !!obj.isFeatured,
-                active: obj.active !== false // default to true
+                active: obj.active !== false, // default to true
+                tournamentsCount: tournamentCounts[obj._id.toString()] || 0
             };
         });
         return NextResponse.json(sanitizedGames);

@@ -17,7 +17,7 @@ interface GameCardProps {
 export default function GameCard({ title, image, category, tournamentsCount, slug }: GameCardProps) {
     return (
         <Card className="group relative h-[400px] flex flex-col justify-end p-0 border-0 overflow-hidden">
-            <div className="absolute inset-0">
+            <Link href={`/games/${slug}`} className="absolute inset-0">
                 {/* Use a placeholder if image fails, or real image */}
                 <Image
                     src={image || "/logo.png"}
@@ -26,7 +26,7 @@ export default function GameCard({ title, image, category, tournamentsCount, slu
                     className="object-cover transition-transform duration-700 group-hover:scale-110"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />
-            </div>
+            </Link>
 
             <div className="relative p-6 z-10 translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
                 <span className="text-primary text-xs font-bold uppercase tracking-wider mb-2 block">

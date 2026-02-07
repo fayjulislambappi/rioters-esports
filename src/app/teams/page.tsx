@@ -45,14 +45,21 @@ export default function TeamsPage() {
                     </p>
                 </div>
 
-                <div className="w-full md:w-auto mt-6 md:mt-0 relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40 w-4 h-4" />
-                    <Input
-                        placeholder="Search teams..."
-                        className="pl-10 w-full md:w-64"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
+                <div className="w-full md:w-auto mt-6 md:mt-0 relative flex flex-col md:flex-row gap-4 items-center">
+                    <Link href="/teams/create">
+                        <Button variant="neon" size="sm">
+                            + Create Team
+                        </Button>
+                    </Link>
+                    <div className="relative w-full md:w-64">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40 w-4 h-4" />
+                        <Input
+                            placeholder="Search teams..."
+                            className="pl-10 w-full"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
                 </div>
             </div>
 
