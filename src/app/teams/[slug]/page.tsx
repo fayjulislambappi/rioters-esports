@@ -3,10 +3,13 @@
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Image from "next/image";
+import { motion } from "framer-motion";
 import Button from "@/components/ui/Button";
 import Link from "next/link";
 import { MoveLeft, Trophy, Users, Globe, Twitter, Share2, Loader } from "lucide-react";
 import PlayerCard from "@/components/features/PlayerCard";
+import RosterCard3D from "@/components/features/RosterCard3D";
+import Carousel3D from "@/components/features/Carousel3D";
 import { toast } from "react-hot-toast";
 
 export default function TeamProfile() {
@@ -157,20 +160,31 @@ export default function TeamProfile() {
                     </h2>
 
                     {team.members?.length > 0 ? (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
-                            {team.members.filter((m: any) => m !== null).map((member: any) => {
-                                const isCaptain = member?._id === (typeof team.captainId === 'string' ? team.captainId : team.captainId?._id);
-                                return (
-                                    <PlayerCard
-                                        key={member._id}
-                                        ign={member.name}
-                                        role={member.roles || [member.role || 'TEAM_MEMBER']}
-                                        rank="Elite"
-                                        image={member.image}
-                                        game={team.gameFocus || "General"}
-                                    />
-                                );
-                            })}
+                        <div className="relative pt-20 pb-40 overflow-hidden md:overflow-visible">
+                            {/* Perspective Container */}
+                            {/* Perspective Container with Scroll Interaction */}
+                            <div
+                                className="flex justify-center items-center perspective-[1000px] h-[500px] cursor-grab active:cursor-grabbing"
+                                onWheel={(e) => {
+                                    // Scroll to rotate logic
+                                    // Prevent default scroll behavior to isolate carousel rotation
+                                    // e.preventDefault(); // Optional: might block page scroll if not careful
+
+                                    // Use a ref or state for rotation if needed, but for simplicity we can use local state or MotionValues
+                                    // However, since we're mapping elements, we need a way to update their positions.
+                                    // For a quick implementation without re-architecting the whole state machine:
+                                    // We'll dispatch a custom event or use a Ref to update the 'rotation' state.
+                                }}
+                            >
+                                <Carousel3D teamMembers={team.members} teamInfo={team} />
+                            </div>
+
+                            {/* Carousel Navigation Hints (Visual only) */}
+                            <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-8 opacity-20 pointer-events-none">
+                                <div className="h-[1px] w-20 bg-gradient-to-r from-transparent to-white" />
+                                <span className="text-[10px] font-black uppercase tracking-[0.8em]">Scroll Roster</span>
+                                <div className="h-[1px] w-20 bg-gradient-to-l from-transparent to-white" />
+                            </div>
                         </div>
                     ) : (
                         <div className="bg-white/5 border border-white/10 rounded-xl p-12 text-center text-white/20 italic font-bold">

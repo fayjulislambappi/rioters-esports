@@ -53,48 +53,57 @@ export default function PlayerStatsModal({ isOpen, onClose, player, stats = defa
                         initial={{ opacity: 0, scale: 0.9, y: 20 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                        className="relative w-full max-w-3xl bg-[#0A0A0A] overflow-hidden rounded-sm border border-white/5 shadow-2xl flex flex-col md:flex-row min-h-[400px]"
+                        className="relative w-full max-w-4xl bg-[#0A0A0A] overflow-hidden rounded-sm border border-white/10 shadow-2xl flex flex-col md:flex-row min-h-[500px]"
                     >
+                        {/* Legendaries Framing Accents */}
+                        <div className="absolute inset-0 border-[8px] border-primary/10 pointer-events-none z-20" />
+                        <div className="absolute top-0 right-0 w-24 h-24 bg-primary/20 bg-gradient-to-bl from-primary to-transparent z-30 clip-path-legendary-corner" />
+
                         {/* Close Button */}
                         <button
                             onClick={onClose}
-                            className="absolute top-3 right-3 z-50 text-white/40 hover:text-white transition-colors"
+                            className="absolute top-4 right-4 z-[60] text-white/40 hover:text-white transition-colors p-2 hover:bg-white/5 rounded-full"
                         >
-                            <X className="w-5 h-5" />
+                            <X className="w-6 h-6" />
                         </button>
 
                         {/* Left Section: Player Portrait & Name */}
-                        <div className="relative flex-1 bg-zinc-900/50 flex flex-row min-h-[300px] md:min-h-0">
+                        <div className="relative flex-1 bg-zinc-900/50 flex flex-row min-h-[400px] md:min-h-0">
                             {/* Vertical Labels */}
-                            <div className="w-16 md:w-24 flex flex-col justify-end p-4 md:p-8 border-r border-white/5">
-                                <div className="rotate-[-90deg] origin-bottom-left whitespace-nowrap translate-y-[-5px]">
-                                    <span className="text-3xl md:text-5xl font-black uppercase tracking-tighter text-white block">
+                            <div className="w-20 md:w-32 flex flex-col justify-end p-6 md:p-12 border-r border-white/5 relative z-10">
+                                <div className="rotate-[-90deg] origin-bottom-left whitespace-nowrap translate-y-[-10px]">
+                                    <span className="text-5xl md:text-8xl font-black uppercase tracking-tighter text-white block drop-shadow-2xl">
                                         {player.ign}
                                     </span>
-                                    <span className="text-primary text-[10px] md:text-xs font-bold uppercase tracking-[0.3em] block mt-1">
+                                    <span className="text-primary text-xs md:text-sm font-bold uppercase tracking-[0.4em] block mt-2">
                                         {player.name}
                                     </span>
                                 </div>
                             </div>
 
-                            {/* Portrait */}
-                            <div className="relative flex-1 bg-gradient-to-b from-transparent to-black/40 overflow-hidden">
+                            {/* Portrait Area */}
+                            <div className="relative flex-1 bg-gradient-to-b from-transparent to-black/60 overflow-hidden">
                                 {player.image ? (
                                     <Image
                                         src={player.image}
                                         alt={player.ign}
                                         fill
-                                        className="object-cover object-top filter brightness-90 contrast-110"
+                                        className="object-cover object-top filter brightness-95 contrast-110"
                                     />
                                 ) : (
                                     <div className="w-full h-full flex items-center justify-center opacity-10">
-                                        <Sword className="w-32 h-32" />
+                                        <Sword className="w-48 h-48" />
                                     </div>
                                 )}
 
+                                {/* Floating Skill Score in Modal */}
+                                <div className="absolute top-8 left-0 z-40 bg-primary px-4 py-2">
+                                    <span className="text-4xl font-black italic text-white leading-none">104</span>
+                                </div>
+
                                 {/* Team Watermark Logo (Center/Background) */}
                                 {player.teamLogo && (
-                                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4/5 h-4/5 opacity-10 pointer-events-none">
+                                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4/5 h-4/5 opacity-5 pointer-events-none">
                                         <Image
                                             src={player.teamLogo}
                                             alt="Team Logo Watermark"
@@ -105,74 +114,79 @@ export default function PlayerStatsModal({ isOpen, onClose, player, stats = defa
                                 )}
 
                                 {/* Sponsorships at bottom of photo */}
-                                <div className="absolute bottom-3 left-4 right-4 flex items-center justify-between opacity-40 scale-75 origin-left">
-                                    <div className="flex gap-4 items-center grayscale">
-                                        <span className="text-[10px] font-black uppercase border border-white/20 px-2 py-1">KIA</span>
-                                        <span className="text-[10px] font-black uppercase border border-white/20 px-2 py-1">LOGITECH</span>
-                                        <span className="text-[10px] font-black uppercase border border-white/20 px-2 py-1">RED BULL</span>
+                                <div className="absolute bottom-6 left-8 right-8 flex items-center justify-between opacity-30 scale-90 origin-left">
+                                    <div className="flex gap-6 items-center grayscale">
+                                        <span className="text-xs font-black uppercase border border-white/20 px-3 py-1">KIA</span>
+                                        <span className="text-xs font-black uppercase border border-white/20 px-3 py-1">LOGITECH</span>
+                                        <span className="text-xs font-black uppercase border border-white/20 px-3 py-1">RED BULL</span>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
                         {/* Right Section: Statistics */}
-                        <div className="w-full md:w-[40%] bg-primary flex flex-col p-6 md:p-10 relative">
+                        <div className="w-full md:w-[42%] bg-primary flex flex-col p-8 md:p-14 relative overflow-hidden">
                             {/* Large Vertical Team Name Background Wrapper */}
-                            <div className="absolute top-0 right-0 h-full w-16 overflow-hidden pointer-events-none opacity-10">
-                                <span className="rotate-90 origin-top-left absolute top-0 left-0 whitespace-nowrap text-7xl font-black uppercase text-black">
+                            <div className="absolute top-0 right-0 h-full w-24 overflow-hidden pointer-events-none opacity-10">
+                                <span className="rotate-90 origin-top-left absolute top-0 left-0 whitespace-nowrap text-9xl font-black uppercase text-black">
                                     {player.teamName || "RIOTERS"}
                                 </span>
                             </div>
 
-                            <div className="relative z-10 space-y-4 md:space-y-6">
-                                <div className="space-y-0.5">
-                                    <div className="flex justify-between items-end border-b border-black/10 pb-1">
-                                        <span className="text-black/60 font-black uppercase text-[10px] tracking-widest">Kills</span>
-                                        <span className="text-black text-4xl md:text-5xl font-black italic leading-none">{stats.kills}</span>
+                            <div className="relative z-10 space-y-6 md:space-y-8">
+                                <div className="space-y-1">
+                                    <div className="flex justify-between items-end border-b-2 border-black/10 pb-2">
+                                        <span className="text-black/60 font-black uppercase text-xs tracking-[0.2em]">Average Kills</span>
+                                        <span className="text-black text-5xl md:text-7xl font-black italic leading-none drop-shadow-sm">{stats.kills}</span>
                                     </div>
                                 </div>
 
-                                <div className="space-y-0.5">
-                                    <div className="flex justify-between items-end border-b border-black/10 pb-1">
-                                        <span className="text-black/60 font-black uppercase text-[10px] tracking-widest">K/D/A</span>
-                                        <span className="text-black text-4xl md:text-5xl font-black italic leading-none">{stats.kda}</span>
+                                <div className="space-y-1">
+                                    <div className="flex justify-between items-end border-b-2 border-black/10 pb-2">
+                                        <span className="text-black/60 font-black uppercase text-xs tracking-[0.2em]">K/D/A Ratio</span>
+                                        <span className="text-black text-5xl md:text-7xl font-black italic leading-none drop-shadow-sm">{stats.kda}</span>
                                     </div>
                                 </div>
 
-                                <div className="space-y-0.5">
-                                    <div className="flex justify-between items-end border-b border-black/10 pb-1">
-                                        <span className="text-black/60 font-black uppercase text-[10px] tracking-widest">Gold %</span>
-                                        <span className="text-black text-2xl md:text-3xl font-black italic leading-none">{stats.goldPct}</span>
+                                <div className="grid grid-cols-1 gap-6 md:gap-8">
+                                    <div className="space-y-1">
+                                        <div className="flex justify-between items-end border-b border-black/10 pb-2">
+                                            <span className="text-black/60 font-black uppercase text-[10px] tracking-widest">Gold Share</span>
+                                            <span className="text-black text-3xl md:text-4xl font-black italic leading-none">{stats.goldPct}</span>
+                                        </div>
                                     </div>
-                                </div>
 
-                                <div className="space-y-0.5">
-                                    <div className="flex justify-between items-end border-b border-black/10 pb-1">
-                                        <span className="text-black/60 font-black uppercase text-[10px] tracking-widest">DMG %</span>
-                                        <span className="text-black text-2xl md:text-3xl font-black italic leading-none">{stats.dmgPct}</span>
+                                    <div className="space-y-1">
+                                        <div className="flex justify-between items-end border-b border-black/10 pb-2">
+                                            <span className="text-black/60 font-black uppercase text-[10px] tracking-widest">DMG Share</span>
+                                            <span className="text-black text-3xl md:text-4xl font-black italic leading-none">{stats.dmgPct}</span>
+                                        </div>
                                     </div>
-                                </div>
 
-                                <div className="space-y-0.5">
-                                    <div className="flex justify-between items-end border-b border-black/10 pb-1">
-                                        <span className="text-black/60 font-black uppercase text-[10px] tracking-widest">DPM</span>
-                                        <span className="text-black text-2xl md:text-3xl font-black italic leading-none">{stats.dpm}</span>
+                                    <div className="space-y-1">
+                                        <div className="flex justify-between items-end border-b border-black/10 pb-2">
+                                            <span className="text-black/60 font-black uppercase text-[10px] tracking-widest">DPM</span>
+                                            <span className="text-black text-3xl md:text-4xl font-black italic leading-none">{stats.dpm}</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
 
                             {/* Tournament Label */}
-                            <div className="mt-auto flex items-center gap-4">
-                                <div className="w-12 h-12 bg-black flex items-center justify-center p-2 rounded-sm italic">
-                                    <span className="text-primary font-black text-[8px] leading-tight text-center uppercase tracking-tighter">
+                            <div className="mt-auto pt-12 flex items-center gap-5">
+                                <div className="w-16 h-16 bg-black flex items-center justify-center p-3 rounded-sm italic shadow-xl">
+                                    <span className="text-primary font-black text-[10px] leading-tight text-center uppercase tracking-tighter">
                                         Rioters<br />League
                                     </span>
                                 </div>
-                                <div>
-                                    <div className="text-[10px] font-black text-black/60 uppercase tracking-widest leading-none">Season 2024</div>
-                                    <div className="text-sm font-black text-black uppercase tracking-tighter">Pro Championship</div>
+                                <div className="space-y-1">
+                                    <div className="text-[10px] font-black text-black/50 uppercase tracking-[0.3em] leading-none">World Series 2024</div>
+                                    <div className="text-lg font-black text-black uppercase tracking-tighter leading-none italic">Legendaries Invite</div>
                                 </div>
                             </div>
+
+                            {/* Decorative Background Icon */}
+                            <Trophy className="absolute -bottom-10 -right-10 w-48 h-48 text-black/5 rotate-12" />
                         </div>
                     </motion.div>
                 </div>
