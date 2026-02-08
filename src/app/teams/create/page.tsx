@@ -207,11 +207,11 @@ export default function CreateTeamPage() {
                             <p className="text-xs text-white/40 mt-1 mb-4">Your personal Discord for verification.</p>
 
                             <label className="block text-sm font-bold uppercase text-white/60 mb-2">
-                                <Gamepad2 className="w-4 h-4 inline mr-2 text-primary" /> Captain&apos;s {formData.gameFocus && (formData.gameFocus === "Counter-Strike 2" || formData.gameFocus === "CS2") ? "Steam Profile Link" : "IGN"} (You) {is5v5 && <span className="text-primary">*</span>}
+                                <Gamepad2 className="w-4 h-4 inline mr-2 text-primary" /> Captain&apos;s {formData.gameFocus && (formData.gameFocus === "Counter-Strike 2" || formData.gameFocus === "CS2") ? "Steam Profile Link" : "IGN"} (You) <span className="text-primary">*</span>
                             </label>
                             <Input
                                 placeholder={formData.gameFocus && (formData.gameFocus === "Counter-Strike 2" || formData.gameFocus === "CS2") ? "https://steamcommunity.com/id/..." : "In-Game Name"}
-                                required={is5v5}
+                                required
                                 value={formData.captainIgn}
                                 onChange={(e) => setFormData({ ...formData, captainIgn: e.target.value })}
                             />

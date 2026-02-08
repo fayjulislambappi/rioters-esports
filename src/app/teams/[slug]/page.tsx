@@ -11,12 +11,14 @@ import PlayerCard from "@/components/features/PlayerCard";
 import RosterCard3D from "@/components/features/RosterCard3D";
 import Carousel3D from "@/components/features/Carousel3D";
 import { toast } from "react-hot-toast";
+import { useSession } from "next-auth/react";
 
 export default function TeamProfile() {
     const params = useParams();
     const [team, setTeam] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [showApplyModal, setShowApplyModal] = useState(false);
+    const { data: session } = useSession();
 
     const [submitting, setSubmitting] = useState(false);
 
@@ -148,9 +150,11 @@ export default function TeamProfile() {
                                 </Button>
                             </Link>
                         )}
-                        <Button variant="primary" size="sm" onClick={() => setShowApplyModal(true)}>
-                            Apply to Join
-                        </Button>
+                        {!team.members?.some((m: any) => m._id === session?.user?.id) && team.captainId?._id !== session?.user?.id && (
+                            <Button variant="primary" size="sm" onClick={() => setShowApplyModal(true)}>
+                                Apply to Join
+                            </Button>
+                        )}
                     </div>
                 </div>
 

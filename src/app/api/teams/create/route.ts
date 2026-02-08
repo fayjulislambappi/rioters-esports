@@ -22,9 +22,8 @@ export async function POST(req: Request) {
         }
 
         // Check constraint: Can only be in ONE team per game
-        const { gameFocus } = await req.json(); // We need gameFocus early for validation
-        // Re-parse body
-        const body = await req.clone().json();
+        const body = await req.json();
+        const { gameFocus } = body;
 
         const existingTeamForGame = user.teams?.find((t: any) => t.game === gameFocus);
 
@@ -46,8 +45,8 @@ export async function POST(req: Request) {
         } = body;
 
         // Basic Validation
-        if (!name || !slug || !gameFocus || !captainDiscord) {
-            return NextResponse.json({ error: "Name, Slug, Game Focus, and Captain Discord are required." }, { status: 400 });
+        if (!name || !slug || !gameFocus || !captainDiscord || !captainIgn) {
+            return NextResponse.json({ error: "Name, Slug, Game Focus, Captain Discord, and Captain IGN are required." }, { status: 400 });
         }
 
         // Game Specific Validation (5v5 Roster)
@@ -117,9 +116,8 @@ export async function POST(req: Request) {
 
         return NextResponse.json(newTeam, { status: 201 });
 
-    } catch (error) {
-        console.error("Error creating team:", error);
-        const errorMessage = error instanceof Error ? error.message : "Internal Server Error";
-        return NextResponse.json({ error: errorMessage }, { status: 500 });
+    } catch (error: any) {
+        console.error("Team Creation Error:", error);
+        return NextResponse.json({ error: error.message || "Internal Server Error" }, { status: 500 });
     }
 }
