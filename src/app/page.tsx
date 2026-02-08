@@ -37,35 +37,23 @@ export default async function Home() {
     })
   );
 
-  const upcomingTournaments = [
-    {
-      id: 1,
-      title: "Valorant Champions 2024",
-      game: "Valorant",
-      date: "Aug 15, 2024",
-      prize: "$10,000",
-      teams: "16/32",
-      image: "https://images.unsplash.com/photo-1624138784181-dc7cc7539698?q=80&w=200&auto=format&fit=crop",
-    },
-    {
-      id: 2,
-      title: "CS2 Major GLL",
-      game: "Counter-Strike 2",
-      date: "Sep 01, 2024",
-      prize: "$25,000",
-      teams: "8/16",
-      image: "https://images.unsplash.com/photo-1605901309584-818e25960b8f?q=80&w=200&auto=format&fit=crop",
-    },
-    {
-      id: 3,
-      title: "League Summer Split",
-      game: "League of Legends",
-      date: "July 20, 2024",
-      prize: "$50,000",
-      teams: "10/10",
-      image: "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=200&auto=format&fit=crop",
-    },
-  ];
+  // Fetch upcoming tournaments
+  const upcomingTournamentsData = await Tournament.find({ status: "UPCOMING" })
+    .sort({ startDate: 1 })
+    .limit(3)
+    .populate("gameId")
+    .lean();
+
+  const upcomingTournaments = upcomingTournamentsData.map((t: any) => ({
+    id: t._id.toString(),
+    title: t.title,
+    game: t.gameId?.title || "Unknown Game",
+    date: new Date(t.startDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+    prize: t.prizePool,
+    teams: `${t.registeredTeams?.length || 0}/${t.maxTeams}`,
+    image: t.image || "https://images.unsplash.com/photo-1624138784181-dc7cc7539698?q=80&w=200&auto=format&fit=crop",
+  }));
+
 
   return (
     <div className="flex flex-col min-h-screen">

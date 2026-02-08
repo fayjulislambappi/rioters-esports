@@ -21,6 +21,7 @@ export default function CreateTeamPage() {
         slug: "",
         gameFocus: "",
         captainDiscord: "",
+        captainIgn: "",
         logo: "",
         recruiting: true,
         sub1_ign: "",
@@ -203,7 +204,18 @@ export default function CreateTeamPage() {
                                 value={formData.captainDiscord}
                                 onChange={(e) => setFormData({ ...formData, captainDiscord: e.target.value })}
                             />
-                            <p className="text-xs text-white/40 mt-1">Your personal Discord for verification.</p>
+                            <p className="text-xs text-white/40 mt-1 mb-4">Your personal Discord for verification.</p>
+
+                            <label className="block text-sm font-bold uppercase text-white/60 mb-2">
+                                <Gamepad2 className="w-4 h-4 inline mr-2 text-primary" /> Captain&apos;s {formData.gameFocus && (formData.gameFocus === "Counter-Strike 2" || formData.gameFocus === "CS2") ? "Steam Profile Link" : "IGN"} (You) {is5v5 && <span className="text-primary">*</span>}
+                            </label>
+                            <Input
+                                placeholder={formData.gameFocus && (formData.gameFocus === "Counter-Strike 2" || formData.gameFocus === "CS2") ? "https://steamcommunity.com/id/..." : "In-Game Name"}
+                                required={is5v5}
+                                value={formData.captainIgn}
+                                onChange={(e) => setFormData({ ...formData, captainIgn: e.target.value })}
+                            />
+                            <p className="text-xs text-white/40 mt-1">Your {formData.gameFocus && (formData.gameFocus === "Counter-Strike 2" || formData.gameFocus === "CS2") ? "Steam Profile Link" : "In-Game Name"} for {formData.gameFocus || "the game"}.</p>
                         </div>
                     </div>
 
@@ -217,8 +229,8 @@ export default function CreateTeamPage() {
                                     <Shield className="w-4 h-4 mr-2" /> 5v5 Roster Required
                                 </p>
                                 <p className="text-xs text-white/60 mt-1">
-                                    A full starting lineup (You + 4 others) and 2 substitutes are required for {formData.gameFocus}.
-                                    Everyone needs a Discord for verification.
+                                    A full starting lineup (You + 4 others) is required for {formData.gameFocus}.
+                                    Substitutes are optional but recommended. Everyone needs a Discord for verification.
                                 </p>
                             </div>
                         )}
@@ -229,9 +241,9 @@ export default function CreateTeamPage() {
                                 <div className="space-y-4 p-4 border border-white/5 rounded-lg bg-white/5">
                                     <h4 className="font-bold text-white/60 uppercase text-xs">Player 2 (Main)</h4>
                                     <div>
-                                        <label className="block text-xs font-bold uppercase text-white/40 mb-1">IGN <span className="text-primary">*</span></label>
+                                        <label className="block text-xs font-bold uppercase text-white/40 mb-1">{formData.gameFocus && (formData.gameFocus === "Counter-Strike 2" || formData.gameFocus === "CS2") ? "Steam Profile Link" : "IGN"} <span className="text-primary">*</span></label>
                                         <Input
-                                            placeholder="In-Game Name"
+                                            placeholder={formData.gameFocus && (formData.gameFocus === "Counter-Strike 2" || formData.gameFocus === "CS2") ? "https://steamcommunity.com/id/..." : "In-Game Name"}
                                             required
                                             value={formData.p2_ign}
                                             onChange={(e) => setFormData({ ...formData, p2_ign: e.target.value })}
@@ -252,9 +264,9 @@ export default function CreateTeamPage() {
                                 <div className="space-y-4 p-4 border border-white/5 rounded-lg bg-white/5">
                                     <h4 className="font-bold text-white/60 uppercase text-xs">Player 3 (Main)</h4>
                                     <div>
-                                        <label className="block text-xs font-bold uppercase text-white/40 mb-1">IGN <span className="text-primary">*</span></label>
+                                        <label className="block text-xs font-bold uppercase text-white/40 mb-1">{formData.gameFocus && (formData.gameFocus === "Counter-Strike 2" || formData.gameFocus === "CS2") ? "Steam Profile Link" : "IGN"} <span className="text-primary">*</span></label>
                                         <Input
-                                            placeholder="In-Game Name"
+                                            placeholder={formData.gameFocus && (formData.gameFocus === "Counter-Strike 2" || formData.gameFocus === "CS2") ? "https://steamcommunity.com/id/..." : "In-Game Name"}
                                             required
                                             value={formData.p3_ign}
                                             onChange={(e) => setFormData({ ...formData, p3_ign: e.target.value })}
@@ -275,9 +287,9 @@ export default function CreateTeamPage() {
                                 <div className="space-y-4 p-4 border border-white/5 rounded-lg bg-white/5">
                                     <h4 className="font-bold text-white/60 uppercase text-xs">Player 4 (Main)</h4>
                                     <div>
-                                        <label className="block text-xs font-bold uppercase text-white/40 mb-1">IGN <span className="text-primary">*</span></label>
+                                        <label className="block text-xs font-bold uppercase text-white/40 mb-1">{formData.gameFocus && (formData.gameFocus === "Counter-Strike 2" || formData.gameFocus === "CS2") ? "Steam Profile Link" : "IGN"} <span className="text-primary">*</span></label>
                                         <Input
-                                            placeholder="In-Game Name"
+                                            placeholder={formData.gameFocus && (formData.gameFocus === "Counter-Strike 2" || formData.gameFocus === "CS2") ? "https://steamcommunity.com/id/..." : "In-Game Name"}
                                             required
                                             value={formData.p4_ign}
                                             onChange={(e) => setFormData({ ...formData, p4_ign: e.target.value })}
@@ -298,9 +310,9 @@ export default function CreateTeamPage() {
                                 <div className="space-y-4 p-4 border border-white/5 rounded-lg bg-white/5">
                                     <h4 className="font-bold text-white/60 uppercase text-xs">Player 5 (Main)</h4>
                                     <div>
-                                        <label className="block text-xs font-bold uppercase text-white/40 mb-1">IGN <span className="text-primary">*</span></label>
+                                        <label className="block text-xs font-bold uppercase text-white/40 mb-1">{formData.gameFocus && (formData.gameFocus === "Counter-Strike 2" || formData.gameFocus === "CS2") ? "Steam Profile Link" : "IGN"} <span className="text-primary">*</span></label>
                                         <Input
-                                            placeholder="In-Game Name"
+                                            placeholder={formData.gameFocus && (formData.gameFocus === "Counter-Strike 2" || formData.gameFocus === "CS2") ? "https://steamcommunity.com/id/..." : "In-Game Name"}
                                             required
                                             value={formData.p5_ign}
                                             onChange={(e) => setFormData({ ...formData, p5_ign: e.target.value })}
@@ -323,13 +335,13 @@ export default function CreateTeamPage() {
                             {/* Sub 1 */}
                             <div className="space-y-4 p-4 border border-white/5 rounded-lg bg-white/5">
                                 <h4 className="font-bold text-white/60 uppercase text-xs">
-                                    Substitute 1 {is5v5 && <span className="text-primary">*</span>}
+                                    Substitute 1
                                 </h4>
                                 <div>
-                                    <label className="block text-xs font-bold uppercase text-white/40 mb-1">IGN</label>
+                                    <label className="block text-xs font-bold uppercase text-white/40 mb-1">{formData.gameFocus && (formData.gameFocus === "Counter-Strike 2" || formData.gameFocus === "CS2") ? "Steam Profile Link" : "IGN"}</label>
                                     <Input
-                                        placeholder="In-Game Name"
-                                        required={is5v5}
+                                        placeholder={formData.gameFocus && (formData.gameFocus === "Counter-Strike 2" || formData.gameFocus === "CS2") ? "https://steamcommunity.com/id/..." : "In-Game Name"}
+                                        required={false}
                                         value={formData.sub1_ign}
                                         onChange={(e) => setFormData({ ...formData, sub1_ign: e.target.value })}
                                     />
@@ -338,7 +350,7 @@ export default function CreateTeamPage() {
                                     <label className="block text-xs font-bold uppercase text-white/40 mb-1">Discord</label>
                                     <Input
                                         placeholder="username"
-                                        required={is5v5}
+                                        required={false}
                                         value={formData.sub1_discord}
                                         onChange={(e) => setFormData({ ...formData, sub1_discord: e.target.value })}
                                     />
@@ -348,13 +360,13 @@ export default function CreateTeamPage() {
                             {/* Sub 2 */}
                             <div className="space-y-4 p-4 border border-white/5 rounded-lg bg-white/5">
                                 <h4 className="font-bold text-white/60 uppercase text-xs">
-                                    Substitute 2 {is5v5 && <span className="text-primary">*</span>}
+                                    Substitute 2
                                 </h4>
                                 <div>
-                                    <label className="block text-xs font-bold uppercase text-white/40 mb-1">IGN</label>
+                                    <label className="block text-xs font-bold uppercase text-white/40 mb-1">{formData.gameFocus && (formData.gameFocus === "Counter-Strike 2" || formData.gameFocus === "CS2") ? "Steam Profile Link" : "IGN"}</label>
                                     <Input
-                                        placeholder="In-Game Name"
-                                        required={is5v5}
+                                        placeholder={formData.gameFocus && (formData.gameFocus === "Counter-Strike 2" || formData.gameFocus === "CS2") ? "https://steamcommunity.com/id/..." : "In-Game Name"}
+                                        required={false}
                                         value={formData.sub2_ign}
                                         onChange={(e) => setFormData({ ...formData, sub2_ign: e.target.value })}
                                     />
@@ -363,7 +375,7 @@ export default function CreateTeamPage() {
                                     <label className="block text-xs font-bold uppercase text-white/40 mb-1">Discord</label>
                                     <Input
                                         placeholder="username"
-                                        required={is5v5}
+                                        required={false}
                                         value={formData.sub2_discord}
                                         onChange={(e) => setFormData({ ...formData, sub2_discord: e.target.value })}
                                     />

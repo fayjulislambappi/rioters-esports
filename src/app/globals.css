@@ -56,6 +56,27 @@
 :root {
   --background: #050505;
   --foreground: #ededed;
+
+  /* Hero Component Variables */
+  --hero-slice-w: 60px;
+  --hero-slice-h: 270px;
+  --hero-gap: 8px;
+}
+
+@media (min-width: 768px) {
+  :root {
+    --hero-slice-w: 80px;
+    --hero-slice-h: 360px;
+    --hero-gap: 12px;
+  }
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --hero-slice-w: 120px;
+    --hero-slice-h: 541.9px;
+    --hero-gap: 16px;
+  }
 }
 
 body {

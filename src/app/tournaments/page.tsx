@@ -110,7 +110,7 @@ export default function TournamentsPage() {
                                     </div>
                                     <div className="flex items-center text-sm text-white/60">
                                         <Users className="w-4 h-4 mr-2" />
-                                        <span>{tournament.registeredTeams?.length || 0} Teams</span>
+                                        <span>{tournament.registeredTeams?.length || 0}/{tournament.maxTeams} Teams</span>
                                     </div>
                                 </div>
 

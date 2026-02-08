@@ -1,8 +1,12 @@
 const mongoose = require('mongoose');
+require('dotenv').config();
 
 async function seedTournament() {
     try {
-        await mongoose.connect('mongodb+srv://esportsmanager:B%40ppy1200@cluster0.ph1x9l1.mongodb.net/test');
+        if (!process.env.MONGODB_URI) {
+            throw new Error("MONGODB_URI is not defined in .env");
+        }
+        await mongoose.connect(process.env.MONGODB_URI);
         console.log("Connected to DB");
 
         // 1. Find or Create Game

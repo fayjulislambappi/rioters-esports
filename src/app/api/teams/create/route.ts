@@ -36,7 +36,7 @@ export async function POST(req: Request) {
 
         const {
             name, slug, logo, description, recruiting,
-            captainDiscord,
+            captainDiscord, captainIgn,
             sub1_ign, sub1_discord,
             sub2_ign, sub2_discord,
             p2_ign, p2_discord,
@@ -53,16 +53,17 @@ export async function POST(req: Request) {
         // Game Specific Validation (5v5 Roster)
         const is5v5 = gameFocus === "Valorant" || gameFocus === "Counter-Strike 2" || gameFocus === "CS2";
         if (is5v5) {
+            if (!captainIgn) {
+                return NextResponse.json({
+                    error: `Captain IGN is required for ${gameFocus}.`
+                }, { status: 400 });
+            }
             if (!p2_ign || !p2_discord || !p3_ign || !p3_discord || !p4_ign || !p4_discord || !p5_ign || !p5_discord) {
                 return NextResponse.json({
                     error: `For ${gameFocus}, a full starting lineup (Player 2-5) with Discord IDs is required.`
                 }, { status: 400 });
             }
-            if ((!sub1_ign || !sub1_discord) || (!sub2_ign || !sub2_discord)) {
-                return NextResponse.json({
-                    error: `For ${gameFocus}, 2 substitutes with Discord IDs are required.`
-                }, { status: 400 });
-            }
+
         }
 
         // Check for duplicate name or slug
@@ -81,6 +82,7 @@ export async function POST(req: Request) {
 
         // Prepare Lineup (Captain + 4 others)
         const lineup = [];
+        if (captainIgn && captainIgn.trim()) lineup.push({ ign: captainIgn.trim(), discord: captainDiscord.trim() }); // Captain is first
         if (p2_ign && p2_ign.trim()) lineup.push({ ign: p2_ign.trim(), discord: p2_discord?.trim() });
         if (p3_ign && p3_ign.trim()) lineup.push({ ign: p3_ign.trim(), discord: p3_discord?.trim() });
         if (p4_ign && p4_ign.trim()) lineup.push({ ign: p4_ign.trim(), discord: p4_discord?.trim() });

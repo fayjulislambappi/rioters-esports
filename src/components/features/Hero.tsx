@@ -59,28 +59,9 @@ export default function Hero() {
     return (
         <section className="relative h-[90vh] flex flex-col items-center justify-center overflow-hidden bg-black">
             {/* Arched/Diamond Gallery Background */}
+            {/* Arched/Diamond Gallery Background */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <style jsx global>{`
-                    :root {
-                        --hero-slice-w: 60px;
-                        --hero-slice-h: 270px;
-                        --hero-gap: 8px;
-                    }
-                    @media (min-width: 768px) {
-                        :root {
-                            --hero-slice-w: 80px;
-                            --hero-slice-h: 360px;
-                            --hero-gap: 12px;
-                        }
-                    }
-                    @media (min-width: 1024px) {
-                        :root {
-                            --hero-slice-w: 120px;
-                            --hero-slice-h: 541.9px;
-                            --hero-gap: 16px;
-                        }
-                    }
-                `}</style>
+
                 <div className="flex justify-center items-center gap-[var(--hero-gap)] flex-nowrap pt-10">
                     {Array.from({ length: 10 }).map((_, index) => {
                         const { y, scaleY } = getLayoutProps(index);
