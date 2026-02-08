@@ -9,6 +9,7 @@ import { toast } from "react-hot-toast";
 export default function AdminApplicationsPage() {
     const [applications, setApplications] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [applicationRoles, setApplicationRoles] = useState<{ [key: string]: string }>({});
 
     const fetchApplications = async () => {
         try {
@@ -16,6 +17,12 @@ export default function AdminApplicationsPage() {
             const data = await res.json();
             if (res.ok) {
                 setApplications(data);
+                // Initialize roles state
+                const roles: { [key: string]: string } = {};
+                data.forEach((app: any) => {
+                    roles[app._id] = "MEMBER";
+                });
+                setApplicationRoles(roles);
             } else {
                 toast.error(data.error || "Failed to fetch applications");
             }
@@ -32,10 +39,11 @@ export default function AdminApplicationsPage() {
 
     const handleAction = async (id: string, status: "APPROVED" | "REJECTED") => {
         try {
+            const role = applicationRoles[id] || "MEMBER";
             const res = await fetch("/api/admin/teams/applications", {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ id, status }),
+                body: JSON.stringify({ id, status, role }),
             });
 
             if (res.ok) {
@@ -75,7 +83,7 @@ export default function AdminApplicationsPage() {
                 ) : (
                     applications.map((app) => (
                         <div key={app._id} className="bg-white/5 border border-white/10 rounded-xl p-6 hover:border-primary/30 transition-colors flex flex-col md:flex-row items-center gap-6">
-                            <div className="flex items-center gap-4 flex-1">
+                            <div className="flex items-center gap-4 flex-1 min-w-0">
                                 <div className="w-12 h-12 rounded-full overflow-hidden bg-white/10 shrink-0">
                                     {app.userId.image ? (
                                         <img src={app.userId.image} alt={app.userId.name} className="w-full h-full object-cover" />
@@ -85,45 +93,66 @@ export default function AdminApplicationsPage() {
                                         </div>
                                     )}
                                 </div>
-                                <div>
-                                    <h3 className="font-bold text-lg">{app.userId.name}</h3>
-                                    <p className="text-sm text-white/40">{app.userId.email}</p>
+                                <div className="min-w-0">
+                                    <h3 className="font-bold text-lg truncate">{app.userId.name}</h3>
+                                    <p className="text-sm text-white/40 truncate">{app.userId.email}</p>
                                 </div>
-                                <div className="mx-4 text-primary">
+                                <div className="mx-2 text-primary shrink-0">
                                     <ArrowLeft className="w-4 h-4 rotate-180" />
                                 </div>
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded bg-white/10 flex items-center justify-center">
+                                <div className="flex items-center gap-3 shrink-0">
+                                    <div className="w-10 h-10 rounded bg-white/10 flex items-center justify-center overflow-hidden">
                                         {app.teamId.logo ? (
                                             <img src={app.teamId.logo} alt={app.teamId.name} className="w-full h-full object-cover" />
                                         ) : (
                                             <Shield className="w-5 h-5 text-primary" />
                                         )}
                                     </div>
-                                    <span className="font-black uppercase italic">{app.teamId.name}</span>
+                                    <span className="font-black uppercase italic text-sm">{app.teamId.name}</span>
                                 </div>
                             </div>
 
                             <div className="flex-1 px-6 border-l border-white/10">
-                                <span className="text-[10px] font-black uppercase text-white/20 block mb-1">Message from Player</span>
-                                <p className="text-sm text-white/60 italic">"{app.message}"</p>
+                                <span className="text-[10px] font-black uppercase text-white/20 block mb-2">Application Data</span>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
+                                    {app.data && Object.keys(app.data).length > 0 ? (
+                                        Object.entries(app.data).map(([key, value]) => (
+                                            <div key={key} className="mb-1">
+                                                <span className="text-[10px] uppercase text-white/40 block tracking-wider">{key.replace(/([A-Z])/g, ' $1').trim()}</span>
+                                                <span className="text-sm font-bold text-white/80 break-all">{String(value)}</span>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <span className="text-white/20 italic text-xs">No additional data provided.</span>
+                                    )}
+                                </div>
                             </div>
 
-                            <div className="flex gap-2">
-                                <Button
-                                    variant="ghost"
-                                    className="text-red-500 hover:bg-red-500/10"
-                                    onClick={() => handleAction(app._id, "REJECTED")}
+                            <div className="flex items-center gap-3">
+                                <select
+                                    className="bg-black/20 border border-white/20 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-primary h-10 uppercase font-bold"
+                                    value={applicationRoles[app._id] || "MEMBER"}
+                                    onChange={(e) => setApplicationRoles({ ...applicationRoles, [app._id]: e.target.value })}
                                 >
-                                    <X className="w-5 h-5" />
-                                </Button>
-                                <Button
-                                    variant="primary"
-                                    className="px-8"
-                                    onClick={() => handleAction(app._id, "APPROVED")}
-                                >
-                                    <Check className="w-5 h-5 mr-2" /> Approve
-                                </Button>
+                                    <option value="MEMBER">TEAM_MEMBER</option>
+                                    <option value="CAPTAIN">Captain</option>
+                                </select>
+                                <div className="flex gap-2">
+                                    <Button
+                                        variant="ghost"
+                                        className="text-red-500 hover:bg-red-500/10 h-10 w-10 p-0"
+                                        onClick={() => handleAction(app._id, "REJECTED")}
+                                    >
+                                        <X className="w-5 h-5" />
+                                    </Button>
+                                    <Button
+                                        variant="primary"
+                                        className="px-6 h-10"
+                                        onClick={() => handleAction(app._id, "APPROVED")}
+                                    >
+                                        <Check className="w-4 h-4 mr-2" /> Approve
+                                    </Button>
+                                </div>
                             </div>
                         </div>
                     ))

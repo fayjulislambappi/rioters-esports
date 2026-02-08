@@ -107,10 +107,62 @@ export default function AdminUsersPage() {
                                             {user.name}
                                         </td>
                                         <td className="p-4 text-sm text-white/60">{user.email}</td>
-                                        <td className="p-4 text-sm font-bold">
-                                            <span className={`px-2 py-0.5 rounded-full text-[10px] ${user.role === 'ADMIN' ? 'bg-primary/20 text-primary' : 'bg-secondary/20 text-secondary'}`}>
-                                                {user.role}
-                                            </span>
+                                        <td className="p-4">
+                                            <div className="flex flex-wrap gap-1 max-w-[200px]">
+                                                {(user.roles || [user.role || 'USER']).map((r: string) => (
+                                                    <span key={r} className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-tighter ${r === 'ADMIN' ? 'bg-primary text-black' : 'bg-white/10 text-white/60'}`}>
+                                                        {r.replace('_', ' ')}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                            <select
+                                                className="mt-2 bg-transparent border border-white/5 rounded px-1 py-0.5 text-[8px] font-bold uppercase text-white/40 focus:outline-none hover:border-white/20 transition-colors cursor-pointer"
+                                                value=""
+                                                onChange={async (e) => {
+                                                    const roleToToggle = e.target.value;
+                                                    if (!roleToToggle) return;
+
+                                                    const currentRoles = user.roles || [user.role || 'USER'];
+                                                    let newRoles;
+                                                    if (currentRoles.includes(roleToToggle)) {
+                                                        if (currentRoles.length === 1) {
+                                                            toast.error("User must have at least one role");
+                                                            return;
+                                                        }
+                                                        newRoles = currentRoles.filter((r: string) => r !== roleToToggle);
+                                                    } else {
+                                                        newRoles = [...currentRoles, roleToToggle];
+                                                    }
+
+                                                    // Optimistic update
+                                                    const updatedUsers = users.map(u => u._id === user._id ? { ...u, roles: newRoles } : u);
+                                                    setUsers(updatedUsers);
+
+                                                    try {
+                                                        const res = await fetch("/api/admin/users", {
+                                                            method: "PATCH",
+                                                            headers: { "Content-Type": "application/json" },
+                                                            body: JSON.stringify({ id: user._id, roles: newRoles }),
+                                                        });
+
+                                                        if (res.ok) {
+                                                            toast.success(`Roles updated`);
+                                                        } else {
+                                                            throw new Error("Failed to update");
+                                                        }
+                                                    } catch (error) {
+                                                        toast.error("Failed to update roles");
+                                                        fetchUsers();
+                                                    }
+                                                }}
+                                            >
+                                                <option value="" disabled className="bg-zinc-900 text-white/40">Add/Remove Role...</option>
+                                                {["USER", "PLAYER", "TEAM_MEMBER", "TEAM_CAPTAIN", "TOURNAMENT_PARTICIPANT", "ADMIN"].map(role => (
+                                                    <option key={role} value={role} className="bg-zinc-900 text-white">
+                                                        {(user.roles || [user.role || 'USER']).includes(role) ? `✓ ${role}` : role}
+                                                    </option>
+                                                ))}
+                                            </select>
                                         </td>
                                         <td className="p-4 text-sm">
                                             {user.isBanned ? (

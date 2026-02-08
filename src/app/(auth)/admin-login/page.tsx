@@ -27,6 +27,7 @@ export default function AdminLoginPage() {
                 redirect: false,
                 email,
                 password,
+                loginType: "admin",
             });
 
             if (res?.error) {
@@ -34,8 +35,8 @@ export default function AdminLoginPage() {
                 toast.error("Access Denied");
             } else {
                 toast.success("Security Clearance Verified");
-                router.push("/admin");
-                router.refresh();
+                // Use hard navigation to ensure fresh session state
+                window.location.href = "/admin";
             }
         } catch (err) {
             setError("Critical Failure: System Unresponsive");

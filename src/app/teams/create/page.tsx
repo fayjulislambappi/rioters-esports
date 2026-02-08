@@ -20,15 +20,21 @@ export default function CreateTeamPage() {
         name: "",
         slug: "",
         gameFocus: "",
-        discord: "",
+        captainDiscord: "",
         logo: "",
         recruiting: true,
-        sub1: "",
-        sub2: "",
-        p2: "",
-        p3: "",
-        p4: "",
-        p5: ""
+        sub1_ign: "",
+        sub1_discord: "",
+        sub2_ign: "",
+        sub2_discord: "",
+        p2_ign: "",
+        p2_discord: "",
+        p3_ign: "",
+        p3_discord: "",
+        p4_ign: "",
+        p4_discord: "",
+        p5_ign: "",
+        p5_discord: ""
     });
 
     // Redirect if not logged in
@@ -100,7 +106,7 @@ export default function CreateTeamPage() {
     const is5v5 = formData.gameFocus === "Valorant" || formData.gameFocus === "Counter-Strike 2" || formData.gameFocus === "CS2";
 
     return (
-        <div className="container mx-auto px-4 py-12 max-w-2xl">
+        <div className="container mx-auto px-4 py-12 max-w-3xl">
             <Link href="/teams" className="inline-block mb-6">
                 <Button variant="ghost" size="sm" className="pl-0 hover:bg-transparent hover:text-primary">
                     <MoveLeft className="mr-2 h-4 w-4" /> Back to Teams
@@ -189,15 +195,15 @@ export default function CreateTeamPage() {
                                 <span className="w-4 h-4 inline-block mr-2 text-[#5865F2] fill-current">
                                     <svg viewBox="0 0 127.14 96.36" className="w-3 h-3 inline fill-current"><path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.11,77.11,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1A105.25,105.25,0,0,0,126.6,80.22c.12-9.23-1.69-19-4.89-27.42C118.52,43.27,113.88,24.78,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5-12.74,11.44-12.74S96.23,46,96.12,53,91.08,65.69,84.69,65.69Z" /></svg>
                                 </span>
-                                Discord Server Invite
+                                Captain&apos;s Discord (You) <span className="text-primary">*</span>
                             </label>
                             <Input
-                                placeholder="https://discord.gg/..."
+                                placeholder="username#1234 or username"
                                 required
-                                value={formData.discord}
-                                onChange={(e) => setFormData({ ...formData, discord: e.target.value })}
+                                value={formData.captainDiscord}
+                                onChange={(e) => setFormData({ ...formData, captainDiscord: e.target.value })}
                             />
-                            <p className="text-xs text-white/40 mt-1">Required for tournament verification and communication.</p>
+                            <p className="text-xs text-white/40 mt-1">Your personal Discord for verification.</p>
                         </div>
                     </div>
 
@@ -212,75 +218,156 @@ export default function CreateTeamPage() {
                                 </p>
                                 <p className="text-xs text-white/60 mt-1">
                                     A full starting lineup (You + 4 others) and 2 substitutes are required for {formData.gameFocus}.
+                                    Everyone needs a Discord for verification.
                                 </p>
                             </div>
                         )}
 
                         {is5v5 && (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                                <div>
-                                    <label className="block text-sm font-bold uppercase text-white/60 mb-2">Player 2 (Main) <span className="text-primary">*</span></label>
-                                    <Input
-                                        placeholder="IGN"
-                                        required
-                                        value={formData.p2}
-                                        onChange={(e) => setFormData({ ...formData, p2: e.target.value })}
-                                    />
+                                {/* Player 2 */}
+                                <div className="space-y-4 p-4 border border-white/5 rounded-lg bg-white/5">
+                                    <h4 className="font-bold text-white/60 uppercase text-xs">Player 2 (Main)</h4>
+                                    <div>
+                                        <label className="block text-xs font-bold uppercase text-white/40 mb-1">IGN <span className="text-primary">*</span></label>
+                                        <Input
+                                            placeholder="In-Game Name"
+                                            required
+                                            value={formData.p2_ign}
+                                            onChange={(e) => setFormData({ ...formData, p2_ign: e.target.value })}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold uppercase text-white/40 mb-1">Discord <span className="text-primary">*</span></label>
+                                        <Input
+                                            placeholder="username"
+                                            required
+                                            value={formData.p2_discord}
+                                            onChange={(e) => setFormData({ ...formData, p2_discord: e.target.value })}
+                                        />
+                                    </div>
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-bold uppercase text-white/60 mb-2">Player 3 (Main) <span className="text-primary">*</span></label>
-                                    <Input
-                                        placeholder="IGN"
-                                        required
-                                        value={formData.p3}
-                                        onChange={(e) => setFormData({ ...formData, p3: e.target.value })}
-                                    />
+
+                                {/* Player 3 */}
+                                <div className="space-y-4 p-4 border border-white/5 rounded-lg bg-white/5">
+                                    <h4 className="font-bold text-white/60 uppercase text-xs">Player 3 (Main)</h4>
+                                    <div>
+                                        <label className="block text-xs font-bold uppercase text-white/40 mb-1">IGN <span className="text-primary">*</span></label>
+                                        <Input
+                                            placeholder="In-Game Name"
+                                            required
+                                            value={formData.p3_ign}
+                                            onChange={(e) => setFormData({ ...formData, p3_ign: e.target.value })}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold uppercase text-white/40 mb-1">Discord <span className="text-primary">*</span></label>
+                                        <Input
+                                            placeholder="username"
+                                            required
+                                            value={formData.p3_discord}
+                                            onChange={(e) => setFormData({ ...formData, p3_discord: e.target.value })}
+                                        />
+                                    </div>
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-bold uppercase text-white/60 mb-2">Player 4 (Main) <span className="text-primary">*</span></label>
-                                    <Input
-                                        placeholder="IGN"
-                                        required
-                                        value={formData.p4}
-                                        onChange={(e) => setFormData({ ...formData, p4: e.target.value })}
-                                    />
+
+                                {/* Player 4 */}
+                                <div className="space-y-4 p-4 border border-white/5 rounded-lg bg-white/5">
+                                    <h4 className="font-bold text-white/60 uppercase text-xs">Player 4 (Main)</h4>
+                                    <div>
+                                        <label className="block text-xs font-bold uppercase text-white/40 mb-1">IGN <span className="text-primary">*</span></label>
+                                        <Input
+                                            placeholder="In-Game Name"
+                                            required
+                                            value={formData.p4_ign}
+                                            onChange={(e) => setFormData({ ...formData, p4_ign: e.target.value })}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold uppercase text-white/40 mb-1">Discord <span className="text-primary">*</span></label>
+                                        <Input
+                                            placeholder="username"
+                                            required
+                                            value={formData.p4_discord}
+                                            onChange={(e) => setFormData({ ...formData, p4_discord: e.target.value })}
+                                        />
+                                    </div>
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-bold uppercase text-white/60 mb-2">Player 5 (Main) <span className="text-primary">*</span></label>
-                                    <Input
-                                        placeholder="IGN"
-                                        required
-                                        value={formData.p5}
-                                        onChange={(e) => setFormData({ ...formData, p5: e.target.value })}
-                                    />
+
+                                {/* Player 5 */}
+                                <div className="space-y-4 p-4 border border-white/5 rounded-lg bg-white/5">
+                                    <h4 className="font-bold text-white/60 uppercase text-xs">Player 5 (Main)</h4>
+                                    <div>
+                                        <label className="block text-xs font-bold uppercase text-white/40 mb-1">IGN <span className="text-primary">*</span></label>
+                                        <Input
+                                            placeholder="In-Game Name"
+                                            required
+                                            value={formData.p5_ign}
+                                            onChange={(e) => setFormData({ ...formData, p5_ign: e.target.value })}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold uppercase text-white/40 mb-1">Discord <span className="text-primary">*</span></label>
+                                        <Input
+                                            placeholder="username"
+                                            required
+                                            value={formData.p5_discord}
+                                            onChange={(e) => setFormData({ ...formData, p5_discord: e.target.value })}
+                                        />
+                                    </div>
                                 </div>
                             </div>
                         )}
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-bold uppercase text-white/60 mb-2">
-                                    Substitute Player 1
-                                    {is5v5 ? <span className="text-primary ml-1">*</span> : " (Optional)"}
-                                </label>
-                                <Input
-                                    placeholder="IGN or Username"
-                                    required={is5v5}
-                                    value={formData.sub1}
-                                    onChange={(e) => setFormData({ ...formData, sub1: e.target.value })}
-                                />
+                            {/* Sub 1 */}
+                            <div className="space-y-4 p-4 border border-white/5 rounded-lg bg-white/5">
+                                <h4 className="font-bold text-white/60 uppercase text-xs">
+                                    Substitute 1 {is5v5 && <span className="text-primary">*</span>}
+                                </h4>
+                                <div>
+                                    <label className="block text-xs font-bold uppercase text-white/40 mb-1">IGN</label>
+                                    <Input
+                                        placeholder="In-Game Name"
+                                        required={is5v5}
+                                        value={formData.sub1_ign}
+                                        onChange={(e) => setFormData({ ...formData, sub1_ign: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold uppercase text-white/40 mb-1">Discord</label>
+                                    <Input
+                                        placeholder="username"
+                                        required={is5v5}
+                                        value={formData.sub1_discord}
+                                        onChange={(e) => setFormData({ ...formData, sub1_discord: e.target.value })}
+                                    />
+                                </div>
                             </div>
-                            <div>
-                                <label className="block text-sm font-bold uppercase text-white/60 mb-2">
-                                    Substitute Player 2
-                                    {is5v5 ? <span className="text-primary ml-1">*</span> : " (Optional)"}
-                                </label>
-                                <Input
-                                    placeholder="IGN or Username"
-                                    required={is5v5}
-                                    value={formData.sub2}
-                                    onChange={(e) => setFormData({ ...formData, sub2: e.target.value })}
-                                />
+
+                            {/* Sub 2 */}
+                            <div className="space-y-4 p-4 border border-white/5 rounded-lg bg-white/5">
+                                <h4 className="font-bold text-white/60 uppercase text-xs">
+                                    Substitute 2 {is5v5 && <span className="text-primary">*</span>}
+                                </h4>
+                                <div>
+                                    <label className="block text-xs font-bold uppercase text-white/40 mb-1">IGN</label>
+                                    <Input
+                                        placeholder="In-Game Name"
+                                        required={is5v5}
+                                        value={formData.sub2_ign}
+                                        onChange={(e) => setFormData({ ...formData, sub2_ign: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold uppercase text-white/40 mb-1">Discord</label>
+                                    <Input
+                                        placeholder="username"
+                                        required={is5v5}
+                                        value={formData.sub2_discord}
+                                        onChange={(e) => setFormData({ ...formData, sub2_discord: e.target.value })}
+                                    />
+                                </div>
                             </div>
                         </div>
                     </div>

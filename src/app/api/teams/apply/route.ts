@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/db";
 import TeamApplication from "@/models/TeamApplication";
 import Team from "@/models/Team";
+import User from "@/models/User";
 
 export async function POST(req: Request) {
     try {
@@ -12,10 +13,10 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "You must be logged in to apply" }, { status: 401 });
         }
 
-        const { teamId, message } = await req.json();
+        const { teamId, message, data } = await req.json();
 
-        if (!teamId || !message) {
-            return NextResponse.json({ error: "Team ID and message are required" }, { status: 400 });
+        if (!teamId) {
+            return NextResponse.json({ error: "Team ID is required" }, { status: 400 });
         }
 
         await connectDB();
@@ -31,11 +32,25 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "You already have a pending application for this team" }, { status: 400 });
         }
 
+        // Check if user is already in a team for this game
+        const team = await Team.findById(teamId);
+        if (!team) return NextResponse.json({ error: "Team not found" }, { status: 404 });
+
+        const user = await User.findById(session.user.id);
+        const existingTeamForGame = user?.teams?.find((t: any) => t.game === team.gameFocus);
+
+        if (existingTeamForGame) {
+            return NextResponse.json({
+                error: `You are already in a team for ${team.gameFocus}. You cannot apply to another team for this game.`
+            }, { status: 400 });
+        }
+
         const application = await TeamApplication.create({
             userId: session.user.id,
             teamId,
-            message,
-            status: "PENDING"
+            message: message || "",
+            status: "PENDING",
+            data: data || {} // Optional data field
         });
 
         return NextResponse.json({ success: true, application });

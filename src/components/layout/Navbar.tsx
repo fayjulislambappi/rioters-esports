@@ -102,7 +102,7 @@ export default function Navbar() {
                                 <Link href="/profile" className="text-white hover:text-primary">
                                     <UserIcon className="w-6 h-6" />
                                 </Link>
-                                {session.user.role === "ADMIN" && (
+                                {session.user.roles?.includes("ADMIN") && (
                                     <Link href="/admin">
                                         <Button variant="neon" size="sm">Admin</Button>
                                     </Link>
@@ -163,7 +163,7 @@ export default function Navbar() {
                                 <div className="flex flex-col gap-4">
                                     <div className="flex items-center justify-between">
                                         <Link href="/profile" onClick={() => setIsOpen(false)} className="text-white font-bold">Profile</Link>
-                                        {session.user.role === "ADMIN" && (
+                                        {session.user.roles?.includes("ADMIN") && (
                                             <Link href="/admin" onClick={() => setIsOpen(false)}>
                                                 <Button variant="neon" size="sm">Admin Panel</Button>
                                             </Link>

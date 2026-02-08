@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/db";
 import Team from "@/models/Team";
+import User from "@/models/User";
 
 export async function GET(
     req: Request,
@@ -11,13 +12,19 @@ export async function GET(
     try {
         const { id } = await params;
         await connectDB();
-        const team = await Team.findById(id);
+        const team = await Team.findById(id).populate('captainId', 'name email').populate('members', 'name email image role');
 
         if (!team) {
             return NextResponse.json({ error: "Team not found" }, { status: 404 });
         }
 
-        return NextResponse.json(team);
+        // Filter out null members (e.g. if a user was deleted)
+        const teamObj = team.toObject();
+        if (teamObj.members) {
+            teamObj.members = teamObj.members.filter((m: any) => m !== null);
+        }
+
+        return NextResponse.json(teamObj);
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
@@ -35,6 +42,10 @@ export async function PUT(
 
         const { id } = await params;
         const body = await req.json();
+
+        if (body.captainId === "") {
+            body.captainId = null;
+        }
 
         await connectDB();
         const team = await Team.findByIdAndUpdate(id, body, { new: true });

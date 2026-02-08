@@ -31,7 +31,14 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "Only the team captain can register for tournaments" }, { status: 403 });
         }
 
-        // 2. Verify Tournament Availability
+        // 2. Check if the team is BANNED
+        if (team.isBanned) {
+            return NextResponse.json({
+                error: "This team is currently banned and cannot participate in tournaments."
+            }, { status: 403 });
+        }
+
+        // 3. Verify Tournament Availability
         const tournament = await Tournament.findById(tournamentId);
         if (!tournament) {
             return NextResponse.json({ error: "Tournament not found" }, { status: 404 });

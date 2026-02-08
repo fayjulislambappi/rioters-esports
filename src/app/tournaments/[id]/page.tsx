@@ -25,10 +25,21 @@ export default async function TournamentDetailsPage({ params }: { params: Promis
         let userTeam = null;
 
         if (session && session.user) {
-            // Find the team where the user is a member (includes captain)
-            userTeam = await Team.findOne({ members: session.user.id })
-                .populate("captainId", "name") // Populate captain name for display
+            // Find ALL teams where user is a member
+            const userTeams = await Team.find({ members: session.user.id })
+                .populate("captainId", "name")
                 .lean();
+
+            // Select the team that matches the tournament's game
+            // We assume tournament.gameId is populated and has a title/name that matches Team.gameFocus
+            const gameTitle = (tournament.gameId as any).title || (tournament.gameId as any).name;
+
+            // First try to find a team for this specific game
+            userTeam = userTeams.find((t: any) => t.gameFocus === gameTitle);
+
+            // If not found, but user has teams, maybe just pick the first one?
+            // No, for strict rules, we should only return the relevant team.
+            // If they don't have a team for this game, userTeam remains null.
         }
 
         // Serialization helper to convert _id and Date objects to strings

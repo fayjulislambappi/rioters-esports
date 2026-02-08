@@ -21,24 +21,46 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "User not found" }, { status: 404 });
         }
 
-        if (user.teamId) {
-            return NextResponse.json({ error: "You are already in a team. Leave your current team to create a new one." }, { status: 400 });
+        // Check constraint: Can only be in ONE team per game
+        const { gameFocus } = await req.json(); // We need gameFocus early for validation
+        // Re-parse body
+        const body = await req.clone().json();
+
+        const existingTeamForGame = user.teams?.find((t: any) => t.game === gameFocus);
+
+        if (existingTeamForGame) {
+            return NextResponse.json({
+                error: `You are already in a team for ${gameFocus}. You cannot create or join another team for this game.`
+            }, { status: 400 });
         }
 
-        const body = await req.json();
-        const { name, slug, gameFocus, discord, logo, description, recruiting, sub1, sub2, p2, p3, p4, p5 } = body;
+        const {
+            name, slug, logo, description, recruiting,
+            captainDiscord,
+            sub1_ign, sub1_discord,
+            sub2_ign, sub2_discord,
+            p2_ign, p2_discord,
+            p3_ign, p3_discord,
+            p4_ign, p4_discord,
+            p5_ign, p5_discord
+        } = body;
 
         // Basic Validation
-        if (!name || !slug || !gameFocus || !discord) {
-            return NextResponse.json({ error: "Name, Slug, Game Focus, and Discord are required." }, { status: 400 });
+        if (!name || !slug || !gameFocus || !captainDiscord) {
+            return NextResponse.json({ error: "Name, Slug, Game Focus, and Captain Discord are required." }, { status: 400 });
         }
 
         // Game Specific Validation (5v5 Roster)
         const is5v5 = gameFocus === "Valorant" || gameFocus === "Counter-Strike 2" || gameFocus === "CS2";
         if (is5v5) {
-            if (!p2 || !p3 || !p4 || !p5 || !sub1 || !sub2) {
+            if (!p2_ign || !p2_discord || !p3_ign || !p3_discord || !p4_ign || !p4_discord || !p5_ign || !p5_discord) {
                 return NextResponse.json({
-                    error: `For ${gameFocus}, a full starting lineup (Player 2-5) and 2 substitutes are required.`
+                    error: `For ${gameFocus}, a full starting lineup (Player 2-5) with Discord IDs is required.`
+                }, { status: 400 });
+            }
+            if ((!sub1_ign || !sub1_discord) || (!sub2_ign || !sub2_discord)) {
+                return NextResponse.json({
+                    error: `For ${gameFocus}, 2 substitutes with Discord IDs are required.`
                 }, { status: 400 });
             }
         }
@@ -54,23 +76,22 @@ export async function POST(req: Request) {
 
         // Prepare Substitutes
         const substitutes = [];
-        if (sub1 && sub1.trim()) substitutes.push(sub1.trim());
-        if (sub2 && sub2.trim()) substitutes.push(sub2.trim());
+        if (sub1_ign && sub1_ign.trim()) substitutes.push({ ign: sub1_ign.trim(), discord: sub1_discord?.trim() });
+        if (sub2_ign && sub2_ign.trim()) substitutes.push({ ign: sub2_ign.trim(), discord: sub2_discord?.trim() });
 
         // Prepare Lineup (Captain + 4 others)
-        // Captain is implied as Player 1 (User), here we store the recruited IGNs
         const lineup = [];
-        if (p2 && p2.trim()) lineup.push(p2.trim());
-        if (p3 && p3.trim()) lineup.push(p3.trim());
-        if (p4 && p4.trim()) lineup.push(p4.trim());
-        if (p5 && p5.trim()) lineup.push(p5.trim());
+        if (p2_ign && p2_ign.trim()) lineup.push({ ign: p2_ign.trim(), discord: p2_discord?.trim() });
+        if (p3_ign && p3_ign.trim()) lineup.push({ ign: p3_ign.trim(), discord: p3_discord?.trim() });
+        if (p4_ign && p4_ign.trim()) lineup.push({ ign: p4_ign.trim(), discord: p4_discord?.trim() });
+        if (p5_ign && p5_ign.trim()) lineup.push({ ign: p5_ign.trim(), discord: p5_discord?.trim() });
 
         // Create Team
         const newTeam = await Team.create({
             name,
             slug,
             gameFocus,
-            socials: { discord },
+            captainDiscord,
             logo,
             description,
             recruiting: recruiting || false,
@@ -81,14 +102,22 @@ export async function POST(req: Request) {
         });
 
         // Update User
-        user.teamId = newTeam._id;
-        user.role = "TEAM_MANAGER"; // Upgrade role to manager/captain
+        // user.teamId = newTeam._id; // DEPRECATED
+        if (!user.teams) user.teams = [];
+        user.teams.push({
+            teamId: newTeam._id,
+            game: gameFocus,
+            role: "CAPTAIN"
+        });
+
+        user.role = "TEAM_CAPTAIN"; // Update global role to captain if not already
         await user.save();
 
         return NextResponse.json(newTeam, { status: 201 });
 
     } catch (error) {
         console.error("Error creating team:", error);
-        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+        const errorMessage = error instanceof Error ? error.message : "Internal Server Error";
+        return NextResponse.json({ error: errorMessage }, { status: 500 });
     }
 }

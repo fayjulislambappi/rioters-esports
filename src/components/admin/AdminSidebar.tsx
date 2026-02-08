@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { signOut } from "next-auth/react";
 import {
     LayoutDashboard,
-    Gamepad2,
+    Gamepad,
     Trophy,
     Users,
     Shield,
@@ -18,7 +19,7 @@ import Button from "@/components/ui/Button";
 
 const adminNavItems = [
     { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
-    { name: "Games", href: "/admin/games", icon: Gamepad2 },
+    { name: "Games", href: "/admin/games", icon: Gamepad },
     { name: "Tournaments", href: "/admin/tournaments", icon: Trophy },
     { name: "Teams", href: "/admin/teams", icon: Shield },
     { name: "Users", href: "/admin/users", icon: Users },
@@ -31,7 +32,7 @@ export default function AdminSidebar() {
     const pathname = usePathname();
 
     return (
-        <div className="w-64 bg-black/50 border-r border-white/10 h-screen fixed left-0 top-0 flex flex-col pt-20 backdrop-blur-xl">
+        <div className="w-64 bg-black/50 border-r border-white/10 h-screen fixed left-0 top-0 flex flex-col backdrop-blur-xl">
             <div className="p-6">
                 <h2 className="text-xl font-black uppercase tracking-widest text-white/50 mb-8">
                     Admin <span className="text-primary">Panel</span>
@@ -56,6 +57,13 @@ export default function AdminSidebar() {
                             </Link>
                         );
                     })}
+                    <button
+                        onClick={() => signOut({ callbackUrl: "/" })}
+                        className="w-full flex items-center px-4 py-3 rounded-lg transition-colors group text-white/60 hover:bg-white/5 hover:text-white"
+                    >
+                        <LogOut className="w-5 h-5 mr-3 text-white/40 group-hover:text-white" />
+                        <span className="font-bold text-sm uppercase tracking-wide">Logout</span>
+                    </button>
                 </nav>
             </div>
 

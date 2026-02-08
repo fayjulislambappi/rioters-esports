@@ -149,7 +149,7 @@ export default function TournamentDetailsClient({ tournament, userTeam, userId }
                                             </div>
                                             <div>
                                                 <div className="font-bold uppercase tracking-wider">{team.name}</div>
-                                                <div className="text-xs text-white/40">{team.members?.length || 0} Members</div>
+                                                <div className="text-xs text-white/40">{team.members?.length || 0} TEAM_MEMBERs</div>
                                             </div>
                                             {team._id === userTeam?._id && (
                                                 <span className="ml-auto text-xs font-bold text-green-400 border border-green-400/20 bg-green-400/10 px-2 py-1 rounded">YOU</span>
