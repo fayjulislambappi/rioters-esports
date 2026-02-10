@@ -33,6 +33,19 @@ export default function PlayerCard({
     const rawRoles = Array.isArray(role) ? role : [role];
     const roles = rawRoles.filter(r => r !== "USER");
 
+    // Role Mapping for UI
+    const roleMapping: Record<string, string> = {
+        "CAPTAIN": "Shotcaller",
+        "ADMIN": "GameMaster",
+        "PLAYER": "Fragger",
+        "SUBSTITUTE": "Bench",
+        "MEMBER": "Member",
+        "TEAM CAPTAIN": "Shotcaller", // Compatibility
+        "TEAM MEMBER": "Member"      // Compatibility
+    };
+
+    const isCaptain = roles.some(r => r === "CAPTAIN" || r === "TEAM CAPTAIN");
+
     return (
         <>
             <motion.div
@@ -45,11 +58,18 @@ export default function PlayerCard({
                 <div className="relative w-full aspect-[2/3] bg-[#0A0A0A] rounded-sm overflow-hidden border border-white/10 group-hover:border-primary/50 transition-colors shadow-2xl">
 
                     {/* Metallic Gold/Primary Border Accent */}
-                    <div className="absolute inset-0 border-[6px] border-primary/20 pointer-events-none z-20" />
+                    <div className={`absolute inset-0 border-[6px] ${isCaptain ? 'border-yellow-500/20' : 'border-primary/20'} pointer-events-none z-20`} />
                     <div className="absolute inset-0 border-t-[1px] border-l-[1px] border-white/20 pointer-events-none z-20" />
 
                     {/* Angled Corner Details */}
-                    <div className="absolute top-0 right-0 w-12 h-12 bg-primary/20 bg-gradient-to-bl from-primary to-transparent z-30 clip-path-polygon-[100%_0,100%_100%,0_0]" />
+                    <div className={`absolute top-0 right-0 w-12 h-12 ${isCaptain ? 'bg-yellow-500/20 bg-gradient-to-bl from-yellow-500 to-transparent' : 'bg-primary/20 bg-gradient-to-bl from-primary to-transparent'} z-30 clip-path-polygon-[100%_0,100%_100%,0_0]`} />
+
+                    {/* Captain Icon (Top Right) */}
+                    {isCaptain && (
+                        <div className="absolute top-2 right-2 z-50 text-yellow-500 animate-pulse drop-shadow-[0_0_8px_rgba(234,179,8,0.5)]">
+                            <Trophy className="w-5 h-5" />
+                        </div>
+                    )}
 
                     {/* Skill Score Badge (Top Left) */}
                     <div className="absolute top-4 left-4 z-40">
@@ -57,17 +77,17 @@ export default function PlayerCard({
                             <span className="text-3xl md:text-4xl font-black italic tracking-tighter text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
                                 {score}
                             </span>
-                            <div className="absolute -bottom-1 left-0 w-full h-[2px] bg-primary" />
+                            <div className={`absolute -bottom-1 left-0 w-full h-[2px] ${isCaptain ? 'bg-yellow-500' : 'bg-primary'}`} />
                         </div>
                     </div>
 
-                    {/* Team/League Logo (Top Right) */}
-                    <div className="absolute top-4 right-4 z-40 w-8 h-8 opacity-60 group-hover:opacity-100 transition-opacity">
+                    {/* Team/League Logo (Top Right - shifted if captain) */}
+                    <div className={`absolute ${isCaptain ? 'top-8 right-4' : 'top-4 right-4'} z-40 w-8 h-8 opacity-60 group-hover:opacity-100 transition-opacity`}>
                         <Image src={teamLogo} alt="Team" width={32} height={32} className="object-contain grayscale group-hover:grayscale-0 transition-all" />
                     </div>
 
                     {/* Portrait Backdrop/Glow */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-primary/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    <div className={`absolute inset-0 ${isCaptain ? 'bg-gradient-to-t from-yellow-500/10' : 'bg-gradient-to-t from-primary/20'} via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
 
                     {/* Player Portrait */}
                     <div className="relative h-full w-full mt-8 overflow-hidden">
@@ -88,16 +108,17 @@ export default function PlayerCard({
                     {/* Info Overlay (Bottom) */}
                     <div className="absolute bottom-0 left-0 right-0 p-4 pt-20 bg-gradient-to-t from-black via-black/80 to-transparent z-40">
                         <div className="space-y-0.5">
-                            <div className="text-[10px] font-black uppercase text-primary tracking-widest leading-none mb-1">
+                            <div className={`text-[10px] font-black uppercase ${isCaptain ? 'text-yellow-500' : 'text-primary'} tracking-widest leading-none mb-1`}>
                                 {game}
                             </div>
-                            <h3 className="text-2xl md:text-3xl font-black uppercase tracking-tighter text-white italic leading-tight group-hover:text-primary transition-colors">
+                            <h3 className="text-2xl md:text-3xl font-black uppercase tracking-tighter text-white italic leading-tight group-hover:text-primary transition-colors flex items-center gap-2">
                                 {ign}
+                                {isCaptain && <span className="text-xs text-yellow-500 not-italic">★</span>}
                             </h3>
-                            <div className="flex items-center gap-2 mt-2">
+                            <div className="flex flex-wrap items-center gap-2 mt-2">
                                 {roles.map((r, i) => (
-                                    <span key={i} className="text-[9px] font-black uppercase bg-white/10 px-2 py-0.5 rounded-sm text-white/60 group-hover:text-white transition-colors">
-                                        {r.replace('_', ' ')}
+                                    <span key={i} className={`text-[9px] font-black uppercase ${isCaptain && (r === "CAPTAIN" || r === "TEAM CAPTAIN") ? 'bg-yellow-500/20 text-yellow-500' : 'bg-white/10 text-white/60'} px-2 py-0.5 rounded-sm group-hover:text-white transition-colors`}>
+                                        {roleMapping[r] || r.replace('_', ' ')}
                                     </span>
                                 ))}
                             </div>
@@ -122,7 +143,7 @@ export default function PlayerCard({
                 player={{
                     name,
                     ign,
-                    roles,
+                    roles: roles.map(r => roleMapping[r] || r.replace('_', ' ')),
                     image,
                     teamLogo,
                     teamName,

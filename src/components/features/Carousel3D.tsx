@@ -38,19 +38,19 @@ export default function Carousel3D({ teamMembers, teamInfo }: Carousel3DProps) {
                 const isCaptain = member?._id?.toString() === captainId?.toString();
 
                 // Find team-specific role
-                const teamRoleEntry = member.teams?.find((t: any) => t.teamId?.toString() === teamInfo._id?.toString() || t.teamId?._id?.toString() === teamInfo._id?.toString());
+                const teamRoleEntry = member.teams?.find((t: any) =>
+                    t.teamId?.toString() === teamInfo._id?.toString() ||
+                    t.teamId?._id?.toString() === teamInfo._id?.toString()
+                );
 
-                let displayRole;
+                let displayRole: string = "TEAM MEMBER";
+
                 if (isCaptain) {
-                    displayRole = "TEAM CAPTAIN";
-                } else {
-                    displayRole = teamRoleEntry?.role || "TEAM MEMBER";
+                    displayRole = "CAPTAIN"; // Technical role, PlayerCard will map it
+                } else if (teamRoleEntry?.role) {
+                    displayRole = teamRoleEntry.role; // Will be ADMIN, PLAYER, SUBSTITUTE, or MEMBER
                 }
 
-                // Safety check: if someone manually set "CAPTAIN" role but isn't the captain
-                if (displayRole === "CAPTAIN" && !isCaptain) {
-                    displayRole = "TEAM MEMBER";
-                }
 
                 return (
                     <CarouselItem
@@ -77,7 +77,11 @@ export default function Carousel3D({ teamMembers, teamInfo }: Carousel3DProps) {
                                 />
                                 <div className="mt-4 text-center pointer-events-none">
                                     <div className="text-[10px] font-black uppercase text-white/20 tracking-[0.4em]">
-                                        {displayRole.replace('_', ' ')}
+                                        {displayRole === "CAPTAIN" ? "Shotcaller" :
+                                            displayRole === "ADMIN" ? "GameMaster" :
+                                                displayRole === "PLAYER" ? "Fragger" :
+                                                    displayRole === "SUBSTITUTE" ? "Bench" :
+                                                        displayRole.replace('_', ' ')}
                                     </div>
                                 </div>
                             </div>

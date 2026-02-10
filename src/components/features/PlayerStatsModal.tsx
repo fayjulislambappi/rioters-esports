@@ -78,6 +78,13 @@ export default function PlayerStatsModal({ isOpen, onClose, player, stats = defa
                                     <span className="text-primary text-xs md:text-sm font-bold uppercase tracking-[0.4em] block mt-2">
                                         {player.name}
                                     </span>
+                                    <div className="flex flex-wrap gap-2 mt-4">
+                                        {player.roles.map((r, i) => (
+                                            <span key={i} className="text-[10px] font-black uppercase bg-primary/20 text-primary px-3 py-1 skew-x-[-10deg] border border-primary/30">
+                                                {r}
+                                            </span>
+                                        ))}
+                                    </div>
                                 </div>
                             </div>
 
