@@ -114,6 +114,15 @@ export async function POST(req: Request) {
 
         // SYNC USER ROLE IF CAPTAIN IS ASSIGNED
         if (body.captainId) {
+            // Check if user is already a captain
+            const proposedCaptain = await User.findById(body.captainId);
+            if (!proposedCaptain) {
+                return NextResponse.json({ error: "Captain user not found" }, { status: 404 });
+            }
+            if (proposedCaptain.teams?.some((t: any) => t.role === "CAPTAIN")) {
+                return NextResponse.json({ error: "Selected user is already a Captain of another team." }, { status: 400 });
+            }
+
             // Add to team members
             await Team.findByIdAndUpdate(team._id, {
                 $addToSet: { members: body.captainId }
@@ -205,6 +214,15 @@ export async function PUT(req: Request) {
         // ALWAYS ENSURE CAPTAIN IS IN MEMBERS LIST
         if (updateData.captainId || oldTeam.captainId) {
             const currentCaptainId = updateData.captainId || oldTeam.captainId;
+
+            // Strict Role Check: If setting a NEW captain, verify they aren't already a captain
+            if (updateData.captainId && updateData.captainId !== oldTeam.captainId?.toString()) {
+                const proposedCaptain = await User.findById(updateData.captainId);
+                if (proposedCaptain?.teams?.some((t: any) => t.role === "CAPTAIN")) {
+                    return NextResponse.json({ error: "Selected user is already a Captain of another team." }, { status: 400 });
+                }
+            }
+
             await Team.findByIdAndUpdate(id, {
                 $addToSet: { members: currentCaptainId }
             });

@@ -21,15 +21,16 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "User not found" }, { status: 404 });
         }
 
-        // Check constraint: Can only be in ONE team per game
+        // Check constraint: Can only be in ONE team per game -> REMOVED
+        // NEW CONSTRAINT: One user can have only ONE `CAPTAIN` role across ALL teams
         const body = await req.json();
         const { gameFocus } = body;
 
-        const existingTeamForGame = user.teams?.find((t: any) => t.game === gameFocus);
+        const isAlreadyCaptain = user.teams?.some((t: any) => t.role === "CAPTAIN");
 
-        if (existingTeamForGame) {
+        if (isAlreadyCaptain) {
             return NextResponse.json({
-                error: `You are already in a team for ${gameFocus}. You cannot create or join another team for this game.`
+                error: `You are already a Captain of another team. You cannot create a new team (as creators become captains).`
             }, { status: 400 });
         }
 
