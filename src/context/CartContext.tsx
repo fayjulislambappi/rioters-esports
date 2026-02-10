@@ -14,7 +14,7 @@ export interface CartItem {
 
 interface CartContextType {
     cart: CartItem[];
-    addToCart: (product: any, selections?: { [groupName: string]: any }) => void;
+    addToCart: (product: any, selections?: { [groupName: string]: any }, quantity?: number) => void;
     removeFromCart: (itemKey: string) => void;
     updateQuantity: (itemKey: string, quantity: number) => void;
     clearCart: () => void;
@@ -49,7 +49,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         }
     }, [cart, isMounted]);
 
-    const addToCart = (product: any, selections?: { [groupName: string]: any }) => {
+    const addToCart = (product: any, selections?: { [groupName: string]: any }, qty: number = 1) => {
         // Construct a unique key from all selections to differentiate cart items
         const selectionKey = selections
             ? Object.entries(selections)
@@ -66,21 +66,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             if (existingItem) {
                 return prevCart.map((item) =>
                     item.itemKey === itemKey
-                        ? { ...item, quantity: item.quantity + 1 }
+                        ? { ...item, quantity: item.quantity + qty }
                         : item
                 );
             } else {
-                // Base price or sum of selections? 
-                // In game top-ups, usually one selection defines the price, others might add/replace.
-                // We'll calculate total price by summing selection prices + base price if necessary.
                 let finalPrice = product.price || 0;
 
                 if (selections) {
                     Object.values(selections).forEach(val => {
                         if (typeof val === 'object' && val.price !== undefined) {
-                            // If it's a selection with price, we use it. 
-                            // If multiple have prices, we sum them. 
-                            // Usually only 'Pack' has price.
                             finalPrice += val.price;
                         }
                     });
@@ -92,7 +86,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
                     name: product.name,
                     image: product.image,
                     price: finalPrice,
-                    quantity: 1,
+                    quantity: qty,
                     selectedOptions: selections
                 };
 

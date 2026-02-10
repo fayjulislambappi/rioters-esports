@@ -35,9 +35,29 @@ export async function POST(req: Request) {
             body.slug = body.name.toLowerCase().replace(/ /g, "-").replace(/[^\w-]+/g, "");
         }
 
+        // Fix potential NaN in price
+        if (body.price !== undefined) {
+            body.price = parseFloat(body.price) || 0;
+        }
+
+        // Strip any IDs that might have been copied/submitted
+        if (body.optionGroups) {
+            body.optionGroups = body.optionGroups.map((group: any) => {
+                const { _id, ...groupData } = group;
+                if (groupData.options) {
+                    groupData.options = groupData.options.map((opt: any) => {
+                        const { _id, ...optData } = opt;
+                        return optData;
+                    });
+                }
+                return groupData;
+            });
+        }
+
         const product = await Product.create(body);
         return NextResponse.json(product, { status: 201 });
     } catch (error: any) {
+        console.error("POST Error:", error);
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }
@@ -72,21 +92,53 @@ export async function PUT(req: Request) {
         }
 
         const body = await req.json();
-        const { id, ...updateData } = body;
+        const { id, _id, ...updateData } = body;
+        const targetId = id || _id;
 
-        if (!id) {
+        if (!targetId) {
             return NextResponse.json({ error: "Product ID required" }, { status: 400 });
         }
 
+        // Fix potential NaN in price
+        if (updateData.price !== undefined) {
+            updateData.price = parseFloat(updateData.price) || 0;
+        }
+
         await connectDB();
-        const product = await Product.findByIdAndUpdate(id, updateData, { new: true });
+
+        // Strip _ids from nested optionGroups to avoid potential Mongo conflicts
+        if (updateData.optionGroups) {
+            updateData.optionGroups = updateData.optionGroups.map((group: any) => {
+                const { _id, ...groupData } = group;
+                if (groupData.options) {
+                    groupData.options = groupData.options.map((opt: any) => {
+                        const { _id, ...optData } = opt;
+                        return optData;
+                    });
+                }
+                return groupData;
+            });
+        }
+
+        console.log("=== PUT REQUEST ===");
+        console.log("ID:", targetId);
+        console.log("Option Groups to save:", updateData.optionGroups?.length || 0);
+
+        const product = await Product.findByIdAndUpdate(targetId, updateData, {
+            new: true,
+            runValidators: true
+        });
 
         if (!product) {
             return NextResponse.json({ error: "Product not found" }, { status: 404 });
         }
 
+        console.log("=== SAVED ===");
+        console.log("Saved groups:", product.optionGroups?.length || 0);
+
         return NextResponse.json({ success: true, product });
     } catch (error: any) {
+        console.error("Consolidated PUT error:", error);
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }

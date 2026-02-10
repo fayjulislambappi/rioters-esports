@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Check, ShoppingCart } from "lucide-react";
+import { X, Check, ShoppingCart, Zap } from "lucide-react";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 interface ProductOptionsModalProps {
     product: any;
@@ -15,6 +16,7 @@ interface ProductOptionsModalProps {
 }
 
 export default function ProductOptionsModal({ product, isOpen, onClose, onAddToCart }: ProductOptionsModalProps) {
+    const router = useRouter();
     const [selections, setSelections] = useState<{ [groupName: string]: any }>({});
     const [totalPrice, setTotalPrice] = useState(0);
 
@@ -54,7 +56,7 @@ export default function ProductOptionsModal({ product, isOpen, onClose, onAddToC
         setSelections(prev => ({ ...prev, [groupName]: value }));
     };
 
-    const handleAddClick = () => {
+    const handleAddClick = (checkout: boolean = false) => {
         // Validate required inputs
         const missingFields = product.optionGroups?.filter((group: any) =>
             group.required && group.type === 'input' && !selections[group.name]
@@ -67,6 +69,10 @@ export default function ProductOptionsModal({ product, isOpen, onClose, onAddToC
 
         onAddToCart(product, selections);
         onClose();
+
+        if (checkout) {
+            router.push("/checkout");
+        }
     };
 
     return (
@@ -135,7 +141,7 @@ export default function ProductOptionsModal({ product, isOpen, onClose, onAddToC
                                                             <span className="text-center">{opt.name}</span>
                                                             {opt.price > 0 && (
                                                                 <span className={selections[group.name]?.name === opt.name ? "text-black/40" : "text-primary"}>
-                                                                    +{opt.price} Tk
+                                                                    {product.price > 0 ? `+${opt.price}` : opt.price} Tk
                                                                 </span>
                                                             )}
                                                         </button>
@@ -158,9 +164,14 @@ export default function ProductOptionsModal({ product, isOpen, onClose, onAddToC
                                         <span className="text-[10px] font-black text-white/40 uppercase block mb-1">Total Price</span>
                                         <span className="text-2xl font-black text-primary">{totalPrice} Tk</span>
                                     </div>
-                                    <Button variant="neon" className="flex-1 h-14" onClick={handleAddClick}>
-                                        <ShoppingCart className="w-4 h-4 mr-2" /> Add to Cart
-                                    </Button>
+                                    <div className="flex flex-col sm:flex-row gap-2 flex-1">
+                                        <Button variant="outline" className="flex-1 h-12 text-xs" onClick={() => handleAddClick(false)}>
+                                            <ShoppingCart className="w-4 h-4 mr-2" /> Add to Cart
+                                        </Button>
+                                        <Button variant="neon" className="flex-1 h-12 text-xs" onClick={() => handleAddClick(true)}>
+                                            <Zap className="w-4 h-4 mr-2" /> Buy Now
+                                        </Button>
+                                    </div>
                                 </div>
                             </div>
                         </div>

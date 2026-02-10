@@ -37,7 +37,7 @@ export default function AdminShopPage() {
         if (!confirm(`Delete product "${name}"?`)) return;
 
         try {
-            const res = await fetch(`/api/admin/products?id=${id}`, {
+            const res = await fetch(`/api/admin/products/${id}`, {
                 method: "DELETE",
             });
 
@@ -50,6 +50,23 @@ export default function AdminShopPage() {
         } catch (error) {
             toast.error("An error occurred");
         }
+    };
+
+    const getPriceRange = (product: any) => {
+        if (!product.optionGroups || product.optionGroups.length === 0) {
+            return `${product.price} Tk`;
+        }
+
+        const priceGroup = product.optionGroups.find((g: any) => g.options?.some((o: any) => o.price > 0));
+
+        if (priceGroup && priceGroup.options) {
+            const prices = priceGroup.options.map((o: any) => o.price + (product.price || 0));
+            const min = Math.min(...prices);
+            const max = Math.max(...prices);
+            return min === max ? `${min} Tk` : `${min} - ${max} Tk`;
+        }
+
+        return `${product.price} Tk`;
     };
 
     const filteredProducts = products.filter(p =>
@@ -112,7 +129,7 @@ export default function AdminShopPage() {
                                         <td className="p-4 text-sm">
                                             <span className="bg-white/5 px-2 py-1 rounded text-white/60">{product.category}</span>
                                         </td>
-                                        <td className="p-4 font-bold text-primary">${product.price}</td>
+                                        <td className="p-4 font-bold text-primary whitespace-nowrap">{getPriceRange(product)}</td>
                                         <td className="p-4 text-right">
                                             <div className="flex justify-end gap-2">
                                                 <Link href={`/admin/shop/edit/${product._id}`}>

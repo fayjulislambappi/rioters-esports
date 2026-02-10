@@ -61,6 +61,7 @@ export async function POST(req: Request) {
                     <thead>
                         <tr style="background-color: #f2f2f2;">
                             <th style="padding: 10px; border: 1px solid #ddd; text-align: left;">Item</th>
+                            <th style="padding: 10px; border: 1px solid #ddd; text-align: left;">Options</th>
                             <th style="padding: 10px; border: 1px solid #ddd; text-align: left;">Qty</th>
                             <th style="padding: 10px; border: 1px solid #ddd; text-align: left;">Price</th>
                         </tr>
@@ -69,8 +70,11 @@ export async function POST(req: Request) {
                         ${items.map((item: any) => `
                             <tr>
                                 <td style="padding: 10px; border: 1px solid #ddd;">${item.name}</td>
+                                <td style="padding: 10px; border: 1px solid #ddd; font-size: 11px; color: #666;">
+                                    ${item.selectedOptions ? Object.entries(item.selectedOptions).map(([k, v]: [string, any]) => `<b>${k}:</b> ${typeof v === 'object' ? v.name : v}`).join('<br>') : 'N/A'}
+                                </td>
                                 <td style="padding: 10px; border: 1px solid #ddd;">${item.quantity}</td>
-                                <td style="padding: 10px; border: 1px solid #ddd;">$${(item.price * item.quantity).toFixed(2)}</td>
+                                <td style="padding: 10px; border: 1px solid #ddd;">${(item.price * item.quantity).toFixed(0)} Tk</td>
                             </tr>
                         `).join('')}
                     </tbody>

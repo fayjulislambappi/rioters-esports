@@ -144,7 +144,23 @@ export default function OrderList() {
                                         <div className="font-bold">{order.shippingDetails.firstName} {order.shippingDetails.lastName}</div>
                                         <div className="text-xs text-white/40">{order.shippingDetails.email}</div>
                                     </td>
-                                    <td className="px-6 py-4 font-bold text-primary">BDT {order.totalAmount}</td>
+                                    <td className="px-6 py-4 font-bold text-primary">{order.totalAmount} Tk</td>
+                                    <td className="px-6 py-4">
+                                        <div className="space-y-1">
+                                            {order.items.map((item, idx) => (
+                                                <div key={idx} className="text-xs">
+                                                    <span className="font-bold">{item.name} x{item.quantity}</span>
+                                                    {item.selectedOptions && (
+                                                        <div className="pl-2 border-l border-white/10 mt-1 text-[10px] text-white/40 uppercase">
+                                                            {Object.entries(item.selectedOptions).map(([k, v]: [string, any]) => (
+                                                                <div key={k}>{k}: {typeof v === 'object' ? v.name : v}</div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </td>
                                     <td className="px-6 py-4">
                                         <div className="text-xs uppercase font-bold mb-1 opacity-70">{order.paymentMethod}</div>
                                         <div className="font-mono text-xs text-white/60">Trx: {order.paymentDetails.transactionId}</div>

@@ -4,11 +4,12 @@ export interface IOrder extends Document {
     orderId: string;
     user?: string; // Optional: Link to User ID if authenticated
     items: {
-        id: number;
+        id: string | number;
         name: string;
         price: number;
         quantity: number;
         image: string;
+        selectedOptions?: { [key: string]: any };
     }[];
     totalAmount: number;
     paymentMethod: "bkash" | "nagad" | "bank";
@@ -35,11 +36,12 @@ const OrderSchema: Schema<IOrder> = new Schema(
         user: { type: String, required: false }, // Store user ID or email if needed
         items: [
             {
-                id: { type: Number, required: true },
+                id: { type: Schema.Types.Mixed, required: true },
                 name: { type: String, required: true },
                 price: { type: Number, required: true },
                 quantity: { type: Number, required: true },
                 image: { type: String, required: false },
+                selectedOptions: { type: Schema.Types.Mixed, required: false },
             },
         ],
         totalAmount: { type: Number, required: true },

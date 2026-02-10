@@ -17,33 +17,11 @@ export async function GET(
             return NextResponse.json({ error: "Product not found" }, { status: 404 });
         }
 
+        console.log("=== GET PRODUCT ===");
+        console.log("ID:", id);
+        console.log("Retrieved groups:", product.optionGroups?.length || 0);
+
         return NextResponse.json(product);
-    } catch (error: any) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-}
-
-export async function PUT(
-    req: Request,
-    { params }: { params: Promise<{ id: string }> }
-) {
-    try {
-        const session = await getServerSession(authOptions);
-        if (!session || session.user.role !== "ADMIN") {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
-
-        const { id } = await params;
-        const body = await req.json();
-
-        await connectDB();
-        const product = await Product.findByIdAndUpdate(id, body, { new: true });
-
-        if (!product) {
-            return NextResponse.json({ error: "Product not found" }, { status: 404 });
-        }
-
-        return NextResponse.json({ success: true, product });
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
