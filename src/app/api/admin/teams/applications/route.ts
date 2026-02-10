@@ -81,34 +81,39 @@ export async function PATCH(req: Request) {
                 });
             }
 
-            // Update user's teams array
-            await User.findByIdAndUpdate(application.userId, {
-                $push: {
-                    teams: {
-                        teamId: application.teamId,
-                        game: team.gameFocus,
-                        role: role
-                    }
+            // FETCH USER TO UPDATE
+            const userToUpdate = await User.findById(application.userId);
+            if (userToUpdate) {
+                // Define roles to add
+                const rolesToAdd: string[] = ["TEAM_MEMBER"];
+                if (role === "CAPTAIN") {
+                    rolesToAdd.push("TEAM_CAPTAIN");
                 }
-            });
 
-            // Multi-role sync: add TEAM_MEMBER and optionally TEAM_CAPTAIN
-            const rolesToAdd = ["TEAM_MEMBER"];
-            if (role === "CAPTAIN") {
-                rolesToAdd.push("TEAM_CAPTAIN");
-            }
+                // 1. Update roles: Remove USER, Add others
+                if (userToUpdate.roles && userToUpdate.roles.includes("USER")) {
+                    userToUpdate.roles = userToUpdate.roles.filter((r: string) => r !== "USER");
+                }
+                if (!userToUpdate.roles) userToUpdate.roles = []; // Initialize if null
 
-            await User.findByIdAndUpdate(application.userId, {
-                $addToSet: { roles: { $each: rolesToAdd } }
-            });
+                rolesToAdd.forEach((r: string) => {
+                    if (!userToUpdate.roles.includes(r as any)) userToUpdate.roles.push(r as any);
+                });
 
-            // Final step: Update primary role badge (precedence)
-            const updatedUser = await User.findById(application.userId);
-            if (updatedUser) {
+                // 2. Update teams array
+                if (!userToUpdate.teams) userToUpdate.teams = [];
+                userToUpdate.teams.push({
+                    teamId: application.teamId,
+                    game: team.gameFocus as string,
+                    role: role as "MEMBER" | "CAPTAIN"
+                });
+
+                // 3. Update primary role
                 const precedence = ["ADMIN", "TEAM_CAPTAIN", "TEAM_MEMBER", "PLAYER", "TOURNAMENT_PARTICIPANT", "USER"];
-                const primaryRole = precedence.find(r => updatedUser.roles.includes(r as any)) || "USER";
+                const primaryRole = precedence.find(r => userToUpdate.roles.includes(r as any)) || "USER";
+                userToUpdate.role = primaryRole;
 
-                await User.findByIdAndUpdate(application.userId, { role: primaryRole });
+                await userToUpdate.save();
             }
         }
 

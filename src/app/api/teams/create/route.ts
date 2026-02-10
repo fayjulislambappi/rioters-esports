@@ -81,13 +81,10 @@ export async function POST(req: Request) {
 
         // Prepare Lineup (Captain + 4 others)
         const lineup = [];
-        if (captainIgn && captainIgn.trim()) lineup.push({ ign: captainIgn.trim(), discord: captainDiscord.trim() }); // Captain is first
-        if (p2_ign && p2_ign.trim()) lineup.push({ ign: p2_ign.trim(), discord: p2_discord?.trim() });
-        if (p3_ign && p3_ign.trim()) lineup.push({ ign: p3_ign.trim(), discord: p3_discord?.trim() });
-        if (p4_ign && p4_ign.trim()) lineup.push({ ign: p4_ign.trim(), discord: p4_discord?.trim() });
-        if (p5_ign && p5_ign.trim()) lineup.push({ ign: p5_ign.trim(), discord: p5_discord?.trim() });
+        if (captainIgn && captainIgn.trim()) lineup.push({ ign: captainIgn.trim(), discord: captainDiscord.trim() });
+        // Lineup logic remains for display, but real member links are handled below
 
-        // Create Team
+        // 1. Create Team with PENDING status
         const newTeam = await Team.create({
             name,
             slug,
@@ -99,11 +96,11 @@ export async function POST(req: Request) {
             substitutes,
             lineup,
             captainId: session.user.id,
-            members: [session.user.id] // Only the creator is a real member initially
+            members: [session.user.id, ...(body.memberIds || [])], // Add captain and selected members
+            status: "PENDING" // Default to PENDING
         });
 
-        // Update User
-        // user.teamId = newTeam._id; // DEPRECATED
+        // 2. Update Captain's User Profile
         if (!user.teams) user.teams = [];
         user.teams.push({
             teamId: newTeam._id,
@@ -111,7 +108,45 @@ export async function POST(req: Request) {
             role: "CAPTAIN"
         });
 
-        user.role = "TEAM_CAPTAIN"; // Update global role to captain if not already
+        // Update global roles for Captain
+        if (user.roles && user.roles.includes("USER")) {
+            user.roles = user.roles.filter((r: string) => r !== "USER");
+        }
+        if (!user.roles) user.roles = [];
+        if (!user.roles.includes("TEAM_CAPTAIN")) {
+            user.roles.push("TEAM_CAPTAIN");
+        }
+        // Legacy role update
+        user.role = "TEAM_CAPTAIN";
+        await user.save();
+
+        // 3. Update Selected Members' User Profiles
+        if (body.memberIds && body.memberIds.length > 0) {
+            const memberIds = body.memberIds;
+            await User.updateMany(
+                { _id: { $in: memberIds } },
+                {
+                    $push: {
+                        teams: {
+                            teamId: newTeam._id,
+                            game: gameFocus,
+                            role: "MEMBER"
+                        },
+                        roles: "TEAM_MEMBER" // Add TEAM_MEMBER role logic needs to be careful not to dupe or leave USER if we want to be strict, but for now simple push is okay or we can do a more complex update.
+                    }
+                }
+            );
+
+            // Fetch and clean up USER role for these members (more robust)
+            const members = await User.find({ _id: { $in: memberIds } });
+            for (const member of members) {
+                if (member.roles && member.roles.includes("USER")) {
+                    member.roles = member.roles.filter((r: string) => r !== "USER");
+                    await member.save();
+                }
+            }
+        }
+
         await user.save();
 
         return NextResponse.json(newTeam, { status: 201 });

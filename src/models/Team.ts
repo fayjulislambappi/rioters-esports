@@ -47,6 +47,11 @@ const TeamSchema = new Schema<ITeam>(
         },
         isOfficial: { type: Boolean, default: false }, // Official/Top Team created by Admin
         isBanned: { type: Boolean, default: false }, // Banned teams cannot participate in tournaments
+        status: {
+            type: String,
+            enum: ["PENDING", "APPROVED", "REJECTED"],
+            default: "PENDING"
+        },
     },
     { timestamps: true },
 );

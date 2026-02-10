@@ -30,7 +30,8 @@ export default function PlayerCard({
     score = "100"
 }: PlayerCardProps) {
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const roles = Array.isArray(role) ? role : [role];
+    const rawRoles = Array.isArray(role) ? role : [role];
+    const roles = rawRoles.filter(r => r !== "USER");
 
     return (
         <>

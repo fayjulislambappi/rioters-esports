@@ -34,7 +34,23 @@ export default function Carousel3D({ teamMembers, teamInfo }: Carousel3DProps) {
             onPan={handlePan}
         >
             {teamMembers.map((member, index) => {
-                const isCaptain = member?._id === (typeof teamInfo.captainId === 'string' ? teamInfo.captainId : teamInfo.captainId?._id);
+                const captainId = typeof teamInfo.captainId === 'string' ? teamInfo.captainId : teamInfo.captainId?._id;
+                const isCaptain = member?._id?.toString() === captainId?.toString();
+
+                // Find team-specific role
+                const teamRoleEntry = member.teams?.find((t: any) => t.teamId?.toString() === teamInfo._id?.toString() || t.teamId?._id?.toString() === teamInfo._id?.toString());
+
+                let displayRole;
+                if (isCaptain) {
+                    displayRole = "TEAM CAPTAIN";
+                } else {
+                    displayRole = teamRoleEntry?.role || "TEAM MEMBER";
+                }
+
+                // Safety check: if someone manually set "CAPTAIN" role but isn't the captain
+                if (displayRole === "CAPTAIN" && !isCaptain) {
+                    displayRole = "TEAM MEMBER";
+                }
 
                 return (
                     <CarouselItem
@@ -51,7 +67,7 @@ export default function Carousel3D({ teamMembers, teamInfo }: Carousel3DProps) {
                             <div className="pointer-events-auto"> {/* Ensure click events pass through */}
                                 <PlayerCard
                                     ign={member.name}
-                                    role={member.roles || [member.role || 'TEAM_MEMBER']}
+                                    role={displayRole}
                                     rank={isCaptain ? "Captain" : "Pro"}
                                     image={member.image}
                                     game={teamInfo.gameFocus || "General"}
@@ -61,7 +77,7 @@ export default function Carousel3D({ teamMembers, teamInfo }: Carousel3DProps) {
                                 />
                                 <div className="mt-4 text-center pointer-events-none">
                                     <div className="text-[10px] font-black uppercase text-white/20 tracking-[0.4em]">
-                                        {isCaptain ? "Leadership" : "Main Roster"}
+                                        {displayRole.replace('_', ' ')}
                                     </div>
                                 </div>
                             </div>

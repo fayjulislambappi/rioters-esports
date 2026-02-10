@@ -138,21 +138,32 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }
+
 export async function PUT(req: Request) {
     try {
         const session = await getServerSession(authOptions);
-        if (!session || session.user.role !== "ADMIN") {
+        if (!session || !["ADMIN", "SUPER_ADMIN"].some(r => session.user.roles?.includes(r))) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
         const body = await req.json();
-        const { id, ...updateData } = body;
+        const { id, status, ...updateData } = body;
 
+        await connectDB();
+
+        // 1. STATUS UPDATE (APPROVE/REJECT)
+        if (id && status) {
+            if (!["APPROVED", "REJECTED", "PENDING"].includes(status)) {
+                return NextResponse.json({ error: "Invalid status" }, { status: 400 });
+            }
+            const team = await Team.findByIdAndUpdate(id, { status }, { new: true });
+            return NextResponse.json({ success: true, team });
+        }
+
+        // 2. GENERAL UPDATE (EXISTING LOGIC)
         if (!id) {
             return NextResponse.json({ error: "Team ID required" }, { status: 400 });
         }
-
-        await connectDB();
 
         // Get old team data to check if captain changed
         const oldTeam = await Team.findById(id);

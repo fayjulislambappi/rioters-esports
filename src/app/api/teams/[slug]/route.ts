@@ -10,7 +10,7 @@ export async function GET(req: Request, props: { params: Promise<{ slug: string 
         await connectDB();
 
         const team = await Team.findOne({ slug })
-            .populate("members", "name image role roles")
+            .populate("members", "name image role roles teams")
             .populate("captainId", "name image");
 
         if (!team) {
