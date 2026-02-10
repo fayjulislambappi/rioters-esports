@@ -31,6 +31,16 @@ export async function POST(
         const user = await User.findById(userId);
         if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
 
+        // Strict Role Check: If proposed role is CAPTAIN or ADMIN, verify they aren't already that in another team
+        if (role === "CAPTAIN" || role === "ADMIN") {
+            const isAlreadyThatRole = user.teams?.some((t: any) => t.role === role && t.teamId.toString() !== id);
+            if (isAlreadyThatRole) {
+                return NextResponse.json({
+                    error: `User is already a ${role === "CAPTAIN" ? "Captain" : "Admin"} of another team.`
+                }, { status: 400 });
+            }
+        }
+
         // Check if user is already in this team
         const existingTeamEntry = user.teams.find((t: any) => t.teamId.toString() === id);
 
@@ -44,19 +54,20 @@ export async function POST(
             // Sync Team Captain if role is set to CAPTAIN
             if (role === "CAPTAIN") {
                 await Team.findByIdAndUpdate(id, { captainId: userId });
-            } else if (role === "MEMBER" && team.captainId?.toString() === userId) {
-                // If they WERE captain but now demoted to member
+            } else if (team.captainId?.toString() === userId && role !== "CAPTAIN") {
+                // If they WERE captain but now demoted
                 await Team.findByIdAndUpdate(id, { captainId: null });
             }
         } else {
-            // IF NEW TO TEAM:
-            // Check if user is in another team for the same game
+            // IF NEW TO TEAM: (Remove the game-focus restriction as per requested logic which allows multiple teams)
+            /*
             const existingTeamForGame = user.teams.find((t: any) => t.game === team.gameFocus);
             if (existingTeamForGame) {
                 return NextResponse.json({
                     error: `User is already in a team for ${team.gameFocus}. They must leave that team first.`
                 }, { status: 400 });
             }
+            */
 
             // Add to Team
             await Team.findByIdAndUpdate(id, {
@@ -81,11 +92,11 @@ export async function POST(
         }
 
         // Final step: Sync user's primary role badge
-        // Refetch user to get updated teams
         const refetchedUser = await User.findById(userId);
         if (refetchedUser) {
             const hasTeams = refetchedUser.teams && refetchedUser.teams.length > 0;
             const hasAnyCaptainRole = refetchedUser.teams.some((t: any) => t.role === "CAPTAIN");
+            const hasAnyAdminRole = refetchedUser.teams.some((t: any) => t.role === "ADMIN");
 
             const newRoles = [...(refetchedUser.roles || [])];
 
@@ -100,12 +111,19 @@ export async function POST(
             if (hasAnyCaptainRole && !newRoles.includes("TEAM_CAPTAIN")) newRoles.push("TEAM_CAPTAIN");
             else if (!hasAnyCaptainRole && newRoles.includes("TEAM_CAPTAIN")) {
                 const i = newRoles.indexOf("TEAM_CAPTAIN");
-                newRoles.splice(i, 1);
+                if (i > -1) newRoles.splice(i, 1);
+            }
+
+            // Sync TEAM_ADMIN
+            if (hasAnyAdminRole && !newRoles.includes("TEAM_ADMIN")) newRoles.push("TEAM_ADMIN");
+            else if (!hasAnyAdminRole && newRoles.includes("TEAM_ADMIN")) {
+                const i = newRoles.indexOf("TEAM_ADMIN");
+                if (i > -1) newRoles.splice(i, 1);
             }
 
             if (newRoles.length === 0) newRoles.push("USER");
 
-            const precedence = ["ADMIN", "TEAM_CAPTAIN", "TEAM_MEMBER", "PLAYER", "TOURNAMENT_PARTICIPANT", "USER"];
+            const precedence = ["ADMIN", "TEAM_ADMIN", "TEAM_CAPTAIN", "TEAM_MEMBER", "PLAYER", "TOURNAMENT_PARTICIPANT", "USER"];
             const primaryRole = precedence.find(r => newRoles.includes(r as any)) || "USER";
 
             await User.findByIdAndUpdate(userId, {

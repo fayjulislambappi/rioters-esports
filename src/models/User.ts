@@ -6,14 +6,14 @@ export interface IUser extends Document {
     password?: string;
     image?: string;
     // role: "USER" | "PLAYER" | "TEAM_MEMBER" | "TEAM_CAPTAIN" | "TOURNAMENT_PARTICIPANT" | "ADMIN"; // DEPRECATED
-    roles: ("USER" | "PLAYER" | "TEAM_MEMBER" | "TEAM_CAPTAIN" | "TOURNAMENT_PARTICIPANT" | "ADMIN")[];
+    roles: ("USER" | "PLAYER" | "TEAM_MEMBER" | "TEAM_CAPTAIN" | "TEAM_ADMIN" | "TOURNAMENT_PARTICIPANT" | "ADMIN")[];
     role: string; // Keep for compatibility during migration
     provider: "credentials" | "google" | "discord"; // For OAuth support
     // teamId: mongoose.Types.ObjectId; // DEPRECATED: Use teams array
     teams: {
         teamId: mongoose.Types.ObjectId;
         game: string;
-        role: "MEMBER" | "CAPTAIN";
+        role: "MEMBER" | "CAPTAIN" | "ADMIN" | "PLAYER" | "SUBSTITUTE";
     }[];
     isBanned: boolean;
     createdAt: Date;
@@ -29,7 +29,7 @@ const UserSchema = new Schema<IUser>(
         role: { type: String, default: "USER" },
         roles: {
             type: [String],
-            enum: ["USER", "PLAYER", "TEAM_MEMBER", "TEAM_CAPTAIN", "TOURNAMENT_PARTICIPANT", "ADMIN"],
+            enum: ["USER", "PLAYER", "TEAM_MEMBER", "TEAM_CAPTAIN", "TEAM_ADMIN", "TOURNAMENT_PARTICIPANT", "ADMIN"],
             default: ["USER"],
         },
         provider: {
@@ -41,7 +41,7 @@ const UserSchema = new Schema<IUser>(
         teams: [{
             teamId: { type: Schema.Types.ObjectId, ref: "Team" },
             game: { type: String, required: true },
-            role: { type: String, enum: ["MEMBER", "CAPTAIN"], default: "MEMBER" }
+            role: { type: String, enum: ["MEMBER", "CAPTAIN", "ADMIN", "PLAYER", "SUBSTITUTE"], default: "MEMBER" }
         }],
         isBanned: { type: Boolean, default: false },
     },

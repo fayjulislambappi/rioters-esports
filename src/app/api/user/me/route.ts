@@ -68,9 +68,10 @@ export async function GET(req: Request) {
             rolesChanged = true;
         }
 
-        // 2. Team-based Sync: Ensure TEAM_MEMBER and TEAM_CAPTAIN are presence-accurate
+        // 2. Team-based Sync: Ensure TEAM_MEMBER, TEAM_CAPTAIN, and TEAM_ADMIN are presence-accurate
         const hasTeams = user.teams && user.teams.length > 0;
         const hasCaptainRole = user.teams?.some((t: any) => t.role === "CAPTAIN");
+        const hasTeamAdminRole = user.teams?.some((t: any) => t.role === "ADMIN");
 
         // Sync TEAM_MEMBER
         if (hasTeams && !newRoles.includes("TEAM_MEMBER")) {
@@ -78,7 +79,7 @@ export async function GET(req: Request) {
             rolesChanged = true;
         } else if (!hasTeams && newRoles.includes("TEAM_MEMBER")) {
             const index = newRoles.indexOf("TEAM_MEMBER");
-            newRoles.splice(index, 1);
+            if (index > -1) newRoles.splice(index, 1);
             rolesChanged = true;
         }
 
@@ -88,7 +89,17 @@ export async function GET(req: Request) {
             rolesChanged = true;
         } else if (!hasCaptainRole && newRoles.includes("TEAM_CAPTAIN")) {
             const index = newRoles.indexOf("TEAM_CAPTAIN");
-            newRoles.splice(index, 1);
+            if (index > -1) newRoles.splice(index, 1);
+            rolesChanged = true;
+        }
+
+        // Sync TEAM_ADMIN (NEW)
+        if (hasTeamAdminRole && !newRoles.includes("TEAM_ADMIN")) {
+            newRoles.push("TEAM_ADMIN");
+            rolesChanged = true;
+        } else if (!hasTeamAdminRole && newRoles.includes("TEAM_ADMIN")) {
+            const index = newRoles.indexOf("TEAM_ADMIN");
+            if (index > -1) newRoles.splice(index, 1);
             rolesChanged = true;
         }
 
@@ -100,7 +111,7 @@ export async function GET(req: Request) {
 
         if (rolesChanged) {
             // Update primary role field for backup compatibility (highest precedence)
-            const precedence = ["ADMIN", "TEAM_CAPTAIN", "TEAM_MEMBER", "PLAYER", "TOURNAMENT_PARTICIPANT", "USER"];
+            const precedence = ["ADMIN", "TEAM_ADMIN", "TEAM_CAPTAIN", "TEAM_MEMBER", "PLAYER", "TOURNAMENT_PARTICIPANT", "USER"];
             const primaryRole = precedence.find(r => newRoles.includes(r as any)) || "USER";
 
             const updatedUser = await User.findByIdAndUpdate(

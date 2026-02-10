@@ -84,17 +84,26 @@ export async function PATCH(req: Request) {
             // FETCH USER TO UPDATE
             const userToUpdate = await User.findById(application.userId);
             if (userToUpdate) {
+                // Strict Role Check: If role is CAPTAIN or ADMIN, verify they aren't already that in another team
+                if (role === "CAPTAIN" || role === "ADMIN") {
+                    const isAlreadyThatRole = userToUpdate.teams?.some((t: any) => t.role === role);
+                    if (isAlreadyThatRole) {
+                        return NextResponse.json({
+                            error: `User is already a ${role === "CAPTAIN" ? "Captain" : "Admin"} of another team. Cannot approve with this role.`
+                        }, { status: 400 });
+                    }
+                }
+
                 // Define roles to add
                 const rolesToAdd: string[] = ["TEAM_MEMBER"];
-                if (role === "CAPTAIN") {
-                    rolesToAdd.push("TEAM_CAPTAIN");
-                }
+                if (role === "CAPTAIN") rolesToAdd.push("TEAM_CAPTAIN");
+                if (role === "ADMIN") rolesToAdd.push("TEAM_ADMIN");
 
                 // 1. Update roles: Remove USER, Add others
                 if (userToUpdate.roles && userToUpdate.roles.includes("USER")) {
                     userToUpdate.roles = userToUpdate.roles.filter((r: string) => r !== "USER");
                 }
-                if (!userToUpdate.roles) userToUpdate.roles = []; // Initialize if null
+                if (!userToUpdate.roles) userToUpdate.roles = [];
 
                 rolesToAdd.forEach((r: string) => {
                     if (!userToUpdate.roles.includes(r as any)) userToUpdate.roles.push(r as any);
@@ -105,11 +114,11 @@ export async function PATCH(req: Request) {
                 userToUpdate.teams.push({
                     teamId: application.teamId,
                     game: team.gameFocus as string,
-                    role: role as "MEMBER" | "CAPTAIN"
+                    role: role as any
                 });
 
                 // 3. Update primary role
-                const precedence = ["ADMIN", "TEAM_CAPTAIN", "TEAM_MEMBER", "PLAYER", "TOURNAMENT_PARTICIPANT", "USER"];
+                const precedence = ["ADMIN", "TEAM_ADMIN", "TEAM_CAPTAIN", "TEAM_MEMBER", "PLAYER", "TOURNAMENT_PARTICIPANT", "USER"];
                 const primaryRole = precedence.find(r => userToUpdate.roles.includes(r as any)) || "USER";
                 userToUpdate.role = primaryRole;
 
