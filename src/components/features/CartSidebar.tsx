@@ -77,16 +77,11 @@ export default function CartSidebar() {
                                                 <h3 className="font-bold text-sm uppercase leading-tight mb-1">
                                                     {item.name}
                                                 </h3>
-                                                {item.selectedVariant && (
-                                                    <p className="text-[10px] text-white/40 uppercase font-black">
-                                                        Style: <span className="text-white">{item.selectedVariant.name}</span>
+                                                {item.selectedOptions && Object.entries(item.selectedOptions).map(([group, val]) => (
+                                                    <p key={group} className="text-[10px] text-white/40 uppercase font-black">
+                                                        {group}: <span className="text-white">{typeof val === 'object' ? val.name : val}</span>
                                                     </p>
-                                                )}
-                                                {item.selectedAddOns && item.selectedAddOns.length > 0 && (
-                                                    <p className="text-[10px] text-white/40 uppercase font-black">
-                                                        Add-ons: <span className="text-white">{item.selectedAddOns.map(a => a.name).join(', ')}</span>
-                                                    </p>
-                                                )}
+                                                ))}
                                                 <p className="text-primary font-bold mt-1">
                                                     {item.price.toFixed(0)} Tk
                                                 </p>

@@ -8,14 +8,13 @@ export interface CartItem {
     price: number;
     image: string;
     quantity: number;
-    selectedVariant?: { name: string, price: number };
-    selectedAddOns?: { name: string, price: number }[];
+    selectedOptions?: { [groupName: string]: any };
     itemKey: string; // Unique key to distinguish items with different options
 }
 
 interface CartContextType {
     cart: CartItem[];
-    addToCart: (product: any, options?: { variant?: any, addOns?: any[] }) => void;
+    addToCart: (product: any, selections?: { [groupName: string]: any }) => void;
     removeFromCart: (itemKey: string) => void;
     updateQuantity: (itemKey: string, quantity: number) => void;
     clearCart: () => void;
@@ -50,8 +49,16 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         }
     }, [cart, isMounted]);
 
-    const addToCart = (product: any, options?: { variant?: any, addOns?: any[] }) => {
-        const itemKey = `${product.id || product._id}-${options?.variant?.name || 'default'}-${(options?.addOns || []).map(a => a.name).sort().join(',')}`;
+    const addToCart = (product: any, selections?: { [groupName: string]: any }) => {
+        // Construct a unique key from all selections to differentiate cart items
+        const selectionKey = selections
+            ? Object.entries(selections)
+                .sort(([a], [b]) => a.localeCompare(b))
+                .map(([group, val]) => `${group}:${typeof val === 'object' ? val.name : val}`)
+                .join('|')
+            : 'default';
+
+        const itemKey = `${product.id || product._id}-${selectionKey}`;
 
         setCart((prevCart) => {
             const existingItem = prevCart.find((item) => item.itemKey === itemKey);
@@ -63,13 +70,19 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
                         : item
                 );
             } else {
-                // Calculate base price from product or selected variant
-                let finalPrice = options?.variant ? options.variant.price : product.price;
+                // Base price or sum of selections? 
+                // In game top-ups, usually one selection defines the price, others might add/replace.
+                // We'll calculate total price by summing selection prices + base price if necessary.
+                let finalPrice = product.price || 0;
 
-                // Add add-on prices
-                if (options?.addOns) {
-                    options.addOns.forEach(addon => {
-                        finalPrice += addon.price;
+                if (selections) {
+                    Object.values(selections).forEach(val => {
+                        if (typeof val === 'object' && val.price !== undefined) {
+                            // If it's a selection with price, we use it. 
+                            // If multiple have prices, we sum them. 
+                            // Usually only 'Pack' has price.
+                            finalPrice += val.price;
+                        }
                     });
                 }
 
@@ -80,8 +93,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
                     image: product.image,
                     price: finalPrice,
                     quantity: 1,
-                    selectedVariant: options?.variant,
-                    selectedAddOns: options?.addOns
+                    selectedOptions: selections
                 };
 
                 return [...prevCart, newItem];

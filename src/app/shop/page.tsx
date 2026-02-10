@@ -107,7 +107,7 @@ export default function ShopPage() {
                                     size="sm"
                                     className="h-8"
                                     onClick={() => {
-                                        if (product.variants?.length > 0 || product.addOns?.length > 0) {
+                                        if (product.optionGroups?.length > 0) {
                                             setSelectedProduct(product);
                                             setIsModalOpen(true);
                                         } else {
@@ -116,7 +116,7 @@ export default function ShopPage() {
                                     }}
                                 >
                                     <ShoppingCart className="w-4 h-4 mr-2" />
-                                    {product.variants?.length > 0 || product.addOns?.length > 0 ? "Select Options" : "Add"}
+                                    {product.optionGroups?.length > 0 ? "Select Options" : "Add"}
                                 </Button>
                             </div>
                         </Card>
