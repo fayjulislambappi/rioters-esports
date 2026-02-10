@@ -102,7 +102,7 @@ export default function CheckoutPage() {
                                         <p className="text-sm font-bold uppercase line-clamp-1">{item.name}</p>
                                         <div className="flex justify-between text-xs text-white/50 mt-1">
                                             <span>Qty: {item.quantity}</span>
-                                            <span>${(item.price * item.quantity).toFixed(2)}</span>
+                                            <span>{(item.price * item.quantity).toFixed(0)} Tk</span>
                                         </div>
                                     </div>
                                 </div>
@@ -112,15 +112,15 @@ export default function CheckoutPage() {
                         <div className="space-y-2 border-t border-white/10 pt-4 text-sm">
                             <div className="flex justify-between">
                                 <span className="text-white/60">Subtotal</span>
-                                <span>${cartTotal.toFixed(2)}</span>
+                                <span>{cartTotal.toFixed(0)} Tk</span>
                             </div>
                             <div className="flex justify-between">
-                                <span className="text-white/60">Tax (8%)</span>
-                                <span>${(cartTotal * 0.08).toFixed(2)}</span>
+                                <span className="text-white/60">Tax (0%)</span>
+                                <span>0 Tk</span>
                             </div>
                             <div className="flex justify-between border-t border-white/10 pt-4 text-lg font-black text-primary">
                                 <span>Total</span>
-                                <span>${(cartTotal * 1.08).toFixed(2)}</span>
+                                <span>{cartTotal.toFixed(0)} Tk</span>
                             </div>
                         </div>
                     </div>

@@ -57,7 +57,7 @@ export default function CartSidebar() {
                             ) : (
                                 cart.map((item) => (
                                     <motion.div
-                                        key={item.id}
+                                        key={item.itemKey}
                                         layout
                                         initial={{ opacity: 0, y: 10 }}
                                         animate={{ opacity: 1, y: 0 }}
@@ -77,15 +77,25 @@ export default function CartSidebar() {
                                                 <h3 className="font-bold text-sm uppercase leading-tight mb-1">
                                                     {item.name}
                                                 </h3>
-                                                <p className="text-primary font-bold">
-                                                    ${item.price.toFixed(2)}
+                                                {item.selectedVariant && (
+                                                    <p className="text-[10px] text-white/40 uppercase font-black">
+                                                        Style: <span className="text-white">{item.selectedVariant.name}</span>
+                                                    </p>
+                                                )}
+                                                {item.selectedAddOns && item.selectedAddOns.length > 0 && (
+                                                    <p className="text-[10px] text-white/40 uppercase font-black">
+                                                        Add-ons: <span className="text-white">{item.selectedAddOns.map(a => a.name).join(', ')}</span>
+                                                    </p>
+                                                )}
+                                                <p className="text-primary font-bold mt-1">
+                                                    {item.price.toFixed(0)} Tk
                                                 </p>
                                             </div>
 
                                             <div className="flex items-center justify-between mt-2">
                                                 <div className="flex items-center bg-white/10 rounded-lg">
                                                     <button
-                                                        onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                                                        onClick={() => updateQuantity(item.itemKey, item.quantity - 1)}
                                                         className="p-1 hover:text-primary transition-colors disabled:opacity-50"
                                                         disabled={item.quantity <= 1}
                                                     >
@@ -95,7 +105,7 @@ export default function CartSidebar() {
                                                         {item.quantity}
                                                     </span>
                                                     <button
-                                                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                                                        onClick={() => updateQuantity(item.itemKey, item.quantity + 1)}
                                                         className="p-1 hover:text-primary transition-colors"
                                                     >
                                                         <Plus className="w-3 h-3" />
@@ -103,7 +113,7 @@ export default function CartSidebar() {
                                                 </div>
 
                                                 <button
-                                                    onClick={() => removeFromCart(item.id)}
+                                                    onClick={() => removeFromCart(item.itemKey)}
                                                     className="text-white/40 hover:text-red-500 transition-colors"
                                                 >
                                                     <Trash2 className="w-4 h-4" />
@@ -121,7 +131,7 @@ export default function CartSidebar() {
                                 <div className="flex justify-between items-center mb-4">
                                     <span className="text-white/60 uppercase text-sm font-bold">Subtotal</span>
                                     <span className="text-2xl font-black text-primary">
-                                        ${cartTotal.toFixed(2)}
+                                        {cartTotal.toFixed(0)} Tk
                                     </span>
                                 </div>
                                 <div className="grid gap-3">

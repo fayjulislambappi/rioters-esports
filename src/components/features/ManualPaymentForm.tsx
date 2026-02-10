@@ -143,7 +143,7 @@ export default function ManualPaymentForm({ amount, shippingDetails }: ManualPay
                 <ul className="list-disc list-inside space-y-1 text-white/70">
                     {instructions[method].steps.map((step, idx) => (
                         <li key={idx}>
-                            {step.replace("{amount}", amount.toFixed(2))}
+                            {step.replace("{amount}", amount.toFixed(0))}
                         </li>
                     ))}
                 </ul>
@@ -172,7 +172,7 @@ export default function ManualPaymentForm({ amount, shippingDetails }: ManualPay
                     className="w-full py-4 text-lg"
                     isLoading={isLoading}
                 >
-                    Confirm Payment (BDT {amount.toFixed(2)})
+                    Confirm Payment ({amount.toFixed(0)} Tk)
                 </Button>
             </form>
         </div>

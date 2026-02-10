@@ -3,18 +3,21 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 
 export interface CartItem {
-    id: number;
+    id: string | number;
     name: string;
     price: number;
     image: string;
     quantity: number;
+    selectedVariant?: { name: string, price: number };
+    selectedAddOns?: { name: string, price: number }[];
+    itemKey: string; // Unique key to distinguish items with different options
 }
 
 interface CartContextType {
     cart: CartItem[];
-    addToCart: (product: any) => void;
-    removeFromCart: (id: number) => void;
-    updateQuantity: (id: number, quantity: number) => void;
+    addToCart: (product: any, options?: { variant?: any, addOns?: any[] }) => void;
+    removeFromCart: (itemKey: string) => void;
+    updateQuantity: (itemKey: string, quantity: number) => void;
     clearCart: () => void;
     isCartOpen: boolean;
     toggleCart: () => void;
@@ -47,35 +50,54 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         }
     }, [cart, isMounted]);
 
-    const addToCart = (product: any) => {
+    const addToCart = (product: any, options?: { variant?: any, addOns?: any[] }) => {
+        const itemKey = `${product.id || product._id}-${options?.variant?.name || 'default'}-${(options?.addOns || []).map(a => a.name).sort().join(',')}`;
+
         setCart((prevCart) => {
-            const existingItem = prevCart.find((item) => item.id === product.id);
+            const existingItem = prevCart.find((item) => item.itemKey === itemKey);
+
             if (existingItem) {
                 return prevCart.map((item) =>
-                    item.id === product.id
+                    item.itemKey === itemKey
                         ? { ...item, quantity: item.quantity + 1 }
                         : item
                 );
             } else {
-                // Parse price string like "$9.99" to number 9.99
-                const priceValue = typeof product.price === 'string'
-                    ? parseFloat(product.price.replace(/[^0-9.]/g, ''))
-                    : product.price;
+                // Calculate base price from product or selected variant
+                let finalPrice = options?.variant ? options.variant.price : product.price;
 
-                return [...prevCart, { ...product, price: priceValue, quantity: 1 }];
+                // Add add-on prices
+                if (options?.addOns) {
+                    options.addOns.forEach(addon => {
+                        finalPrice += addon.price;
+                    });
+                }
+
+                const newItem: CartItem = {
+                    id: product.id || product._id,
+                    itemKey,
+                    name: product.name,
+                    image: product.image,
+                    price: finalPrice,
+                    quantity: 1,
+                    selectedVariant: options?.variant,
+                    selectedAddOns: options?.addOns
+                };
+
+                return [...prevCart, newItem];
             }
         });
         setIsCartOpen(true);
     };
 
-    const removeFromCart = (id: number) => {
-        setCart((prevCart) => prevCart.filter((item) => item.id !== id));
+    const removeFromCart = (itemKey: string) => {
+        setCart((prevCart) => prevCart.filter((item) => item.itemKey !== itemKey));
     };
 
-    const updateQuantity = (id: number, quantity: number) => {
+    const updateQuantity = (itemKey: string, quantity: number) => {
         if (quantity < 1) return;
         setCart((prevCart) =>
-            prevCart.map((item) => (item.id === id ? { ...item, quantity } : item))
+            prevCart.map((item) => (item.itemKey === itemKey ? { ...item, quantity } : item))
         );
     };
 

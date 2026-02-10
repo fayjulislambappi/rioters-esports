@@ -7,12 +7,15 @@ import Input from "@/components/ui/Input";
 import { Search, ShoppingCart, Loader } from "lucide-react";
 import Card from "@/components/ui/Card";
 import { useCart } from "@/context/CartContext";
+import ProductOptionsModal from "@/components/features/ProductOptionsModal";
 
 export default function ShopPage() {
     const [searchTerm, setSearchTerm] = useState("");
     const [filter, setFilter] = useState("All");
     const [products, setProducts] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [selectedProduct, setSelectedProduct] = useState<any>(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
     const { addToCart } = useCart();
 
     useEffect(() => {
@@ -94,27 +97,39 @@ export default function ShopPage() {
                         <Card key={product._id} className="p-4 group">
                             <div className="relative aspect-square mb-4 rounded-lg overflow-hidden bg-white/5">
                                 <Image src={product.image} alt={product.name} fill className="object-cover group-hover:scale-110 transition-transform duration-500" />
-                                <div className="absolute top-2 right-2 bg-black/80 text-white text-xs font-bold px-2 py-1 rounded">
-                                    {product.category}
-                                </div>
                             </div>
 
                             <h3 className="font-bold uppercase text-lg mb-1">{product.name}</h3>
                             <div className="flex items-center justify-between mt-4">
-                                <span className="text-xl font-bold text-primary">${product.price}</span>
+                                <span className="text-xl font-bold text-primary">{product.price} Tk</span>
                                 <Button
                                     variant="neon"
                                     size="sm"
                                     className="h-8"
-                                    onClick={() => addToCart(product)}
+                                    onClick={() => {
+                                        if (product.variants?.length > 0 || product.addOns?.length > 0) {
+                                            setSelectedProduct(product);
+                                            setIsModalOpen(true);
+                                        } else {
+                                            addToCart(product);
+                                        }
+                                    }}
                                 >
-                                    <ShoppingCart className="w-4 h-4 mr-2" /> Add
+                                    <ShoppingCart className="w-4 h-4 mr-2" />
+                                    {product.variants?.length > 0 || product.addOns?.length > 0 ? "Select Options" : "Add"}
                                 </Button>
                             </div>
                         </Card>
                     ))}
                 </div>
             )}
+
+            <ProductOptionsModal
+                product={selectedProduct}
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                onAddToCart={addToCart}
+            />
         </div>
     );
 }
