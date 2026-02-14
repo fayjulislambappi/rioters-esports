@@ -24,8 +24,8 @@ export default function Carousel3D({ teamMembers, teamInfo }: Carousel3DProps) {
 
     const count = teamMembers.length;
 
-    // Dynamic radius based on count to keep gaps consistent, minimum 300
-    const radius = Math.max(300, count * 110);
+    // Dynamic radius based on count to keep gaps consistent, minimum 350
+    const radius = Math.max(350, count * 90);
 
     return (
         <motion.div
@@ -46,9 +46,11 @@ export default function Carousel3D({ teamMembers, teamInfo }: Carousel3DProps) {
                 let displayRole: string = "TEAM MEMBER";
 
                 if (isCaptain) {
-                    displayRole = "CAPTAIN"; // Technical role, PlayerCard will map it
+                    displayRole = "CAPTAIN";
                 } else if (teamRoleEntry?.role) {
-                    displayRole = teamRoleEntry.role; // Will be ADMIN, PLAYER, SUBSTITUTE, or MEMBER
+                    displayRole = teamRoleEntry.role; // Specific role for THIS team
+                } else if (member.role) {
+                    displayRole = member.role; // Global role or manual role (e.g. for substitutes)
                 }
 
 
@@ -106,18 +108,20 @@ function CarouselItem({ index, count, rotation, radius, children }: any) {
     // Framer Motion uses degrees for rotation but Math uses radians.
 
     const x = useTransform(angle, (a) => radius * Math.sin(a * Math.PI / 180));
-    const z = useTransform(angle, (a) => radius * Math.cos(a * Math.PI / 180));
+    // Normalize Z so the front card (angle 0) is always at z=0.
+    // This ensures consistent card size across teams with different member counts.
+    const z = useTransform(angle, (a) => radius * (Math.cos(a * Math.PI / 180) - 1));
 
     // Rotate the card to face outward
     const rotateY = useTransform(angle, (a) => a);
 
-    // Dynamic Z-Index for simple layering (imperfect but works for circle)
-    // We want items with largest Z (closest to viewer) to have highest index.
-    const zIndex = useTransform(z, (currentZ) => Math.round(currentZ + radius + 100));
+    // Dynamic Z-Index for layering
+    // Front card (z=0) gets highest index.
+    const zIndex = useTransform(z, (currentZ) => Math.round(currentZ + (2 * radius) + 100));
 
-    // Opacity/Scale fade for items in back
-    const opacity = useTransform(z, [-radius, radius], [0.3, 1]);
-    const scale = useTransform(z, [-radius, radius], [0.6, 1]);
+    // Opacity/Scale fade for items in back (z ranges from -2*radius to 0)
+    const opacity = useTransform(z, [-2 * radius, 0], [0.3, 1]);
+    const scale = useTransform(z, [-2 * radius, 0], [0.6, 1]);
 
     return (
         <motion.div

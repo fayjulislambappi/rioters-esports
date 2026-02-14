@@ -36,9 +36,44 @@ export default function ShopPage() {
         p.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    // Group products by category
+    // Group products by category, consolidating game top-ups but keeping Games separate
     const groupedProducts = filteredProducts.reduce((acc: any, product) => {
-        const cat = product.category || "Other";
+        let cat = product.category || "Other";
+
+        // Normalize the category name to check
+        const normalizedCat = cat.toLowerCase().trim();
+
+        // List of game-related keywords for TOP-UPS to consolidate
+        const topUpKeywords = [
+            "pubg", "free fire", "mobile legends", "call of duty", "cod",
+            "valorant", "league of legends", "lol", "clash", "genshin",
+            "honkai", "fc mobile", "efootball", "fifa", "fc26", "fc 26",
+            "fortnite", "apex", "roblox", "minecraft", "brawl",
+            "among us", "fall guys", "rocket league", "game top-up",
+            "top-up", "topup", "uc", "diamonds", "vp", "coins", "points"
+        ];
+
+        // Check if it's a physical game product (not a top-up)
+        const isPhysicalGame = normalizedCat.includes("game") &&
+            !topUpKeywords.some(keyword => normalizedCat.includes(keyword));
+
+        // Check for Steam specifically to keep it separate
+        const isSteam = normalizedCat.includes("steam");
+
+        // If it's a top-up, consolidate under "Game Top-Up"
+        const isGameTopUp = !isSteam && topUpKeywords.some(keyword =>
+            normalizedCat.split(' ').some((word: string) => word === keyword) || // Match whole words
+            (keyword.length > 3 && normalizedCat.includes(keyword)) // Match longer substrings
+        );
+
+        if (isSteam) {
+            cat = "Steam Wallet";
+        } else if (isPhysicalGame) {
+            cat = "Games";
+        } else if (isGameTopUp) {
+            cat = "Game Top-Up";
+        }
+
         if (!acc[cat]) acc[cat] = [];
         acc[cat].push(product);
         return acc;

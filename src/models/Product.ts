@@ -10,10 +10,12 @@ export interface IProduct extends Document {
     optionGroups?: {
         name: string;
         type: 'selection' | 'input';
-        options?: { name: string, price: number }[];
+        options?: { name: string, price: number, inStock?: boolean }[];
         placeholder?: string;
         required?: boolean;
     }[];
+    requiresSize?: boolean;
+    sizeType?: 'footwear' | 'apparel' | null;
     active: boolean;
     createdAt: Date;
     updatedAt: Date;
@@ -32,11 +34,14 @@ const ProductSchema: Schema<IProduct> = new Schema(
             type: { type: String, enum: ['selection', 'input'], required: true },
             options: [{
                 name: { type: String, required: true },
-                price: { type: Number, required: true }
+                price: { type: Number, required: true },
+                inStock: { type: Boolean, default: true }
             }],
             placeholder: { type: String },
             required: { type: Boolean, default: false }
         }],
+        requiresSize: { type: Boolean, default: false },
+        sizeType: { type: String, enum: ['footwear', 'apparel', null], default: null },
         active: { type: Boolean, default: true },
     },
     { timestamps: true }

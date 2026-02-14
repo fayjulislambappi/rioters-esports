@@ -12,15 +12,36 @@ import RosterCard3D from "@/components/features/RosterCard3D";
 import Carousel3D from "@/components/features/Carousel3D";
 import { toast } from "react-hot-toast";
 import { useSession } from "next-auth/react";
+import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 
 export default function TeamProfile() {
     const params = useParams();
     const [team, setTeam] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [showApplyModal, setShowApplyModal] = useState(false);
+    const [showRosterModal, setShowRosterModal] = useState(false);
     const { data: session } = useSession();
 
     const [submitting, setSubmitting] = useState(false);
+    const [updatingRoster, setUpdatingRoster] = useState(false);
+
+    const [editRoster, setEditRoster] = useState<{
+        lineup: { ign: string; discord: string; userId?: string }[];
+        substitutes: { ign: string; discord: string; userId?: string }[];
+    }>({ lineup: [], substitutes: [] });
+
+    const isCaptain =
+        session?.user?.role === "ADMIN" ||
+        (session?.user?.id && (
+            // 1. Check direct captainId field
+            team?.captainId?._id?.toString() === session.user.id ||
+            team?.captainId?.toString() === session.user.id ||
+            // 2. Check if user is in members list with CAPTAIN role for THIS specific team
+            team?.members?.some((m: any) =>
+                (m._id?.toString() === session.user.id || m === session.user.id) &&
+                m.teams?.some((t: any) => t.teamId?.toString() === team?._id?.toString() && t.role === "CAPTAIN")
+            )
+        ));
 
     // Valorant Questionnaire State
     // Dynamic Questionnaire State
@@ -30,6 +51,11 @@ export default function TeamProfile() {
     useEffect(() => {
         if (team?.gameFocus) {
             setQuestionnaireData({});
+            // Initialize edit roster from team data
+            setEditRoster({
+                lineup: team.lineup || [],
+                substitutes: team.substitutes || []
+            });
         }
     }, [team]);
 
@@ -69,6 +95,8 @@ export default function TeamProfile() {
             if (res.ok) {
                 toast.success("Application submitted successfully!");
                 setShowApplyModal(false);
+                // Update local state to hide button immediately
+                setTeam((prev: any) => ({ ...prev, hasApplied: true }));
             } else {
                 toast.error(data.error || "Failed to submit application");
             }
@@ -76,6 +104,68 @@ export default function TeamProfile() {
             toast.error("An error occurred");
         } finally {
             setSubmitting(false);
+        }
+    };
+
+    const handleRosterUpdate = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setUpdatingRoster(true);
+        try {
+            const res = await fetch(`/api/teams/${params.slug}/roster`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(editRoster),
+            });
+
+            const data = await res.json();
+            if (res.ok) {
+                toast.success("Roster updated successfully!");
+                setTeam(data.team);
+                setShowRosterModal(false);
+            } else {
+                toast.error(data.error || "Failed to update roster");
+            }
+        } catch (error) {
+            toast.error("An error occurred");
+        } finally {
+            setUpdatingRoster(false);
+        }
+    };
+
+    const onDragEnd = (result: DropResult) => {
+        const { source, destination } = result;
+        if (!destination) return;
+
+        // Source is 'members' list
+        if (source.droppableId === "members") {
+            const playerIndex = source.index;
+            const availableMembers = team?.members || [];
+            const player = availableMembers[playerIndex];
+
+            if (!player) return;
+
+            // Target is a lineup slot
+            if (destination.droppableId.startsWith("lineup-")) {
+                const index = parseInt(destination.droppableId.split("-")[1]);
+                const newLineup = [...editRoster.lineup];
+                newLineup[index] = {
+                    ign: player.name || "",
+                    discord: "",
+                    userId: player._id?.toString()
+                };
+                setEditRoster({ ...editRoster, lineup: newLineup });
+            }
+            // Target is a sub slot
+            else if (destination.droppableId.startsWith("sub-")) {
+                const index = parseInt(destination.droppableId.split("-")[1]);
+                const newSubs = [...editRoster.substitutes];
+                newSubs[index] = {
+                    ign: player.name || "",
+                    discord: "",
+                    userId: player._id?.toString()
+                };
+                setEditRoster({ ...editRoster, substitutes: newSubs });
+            }
         }
     };
 
@@ -151,8 +241,22 @@ export default function TeamProfile() {
                             </Link>
                         )}
                         {!team.members?.some((m: any) => m._id === session?.user?.id) && team.captainId?._id !== session?.user?.id && (
-                            <Button variant="primary" size="sm" onClick={() => setShowApplyModal(true)}>
-                                Apply to Join
+                            <>
+                                {team.hasApplied ? (
+                                    <div className="flex items-center gap-2 px-4 py-2 rounded-md bg-yellow-500/10 text-yellow-500 border border-yellow-500/30 font-black uppercase text-[10px] tracking-widest shadow-[0_0_15px_rgba(234,179,8,0.2)]">
+                                        <div className="w-2 h-2 rounded-full bg-yellow-500 animate-pulse" />
+                                        Application Pending
+                                    </div>
+                                ) : (
+                                    <Button variant="primary" size="sm" onClick={() => setShowApplyModal(true)}>
+                                        Apply to Join
+                                    </Button>
+                                )}
+                            </>
+                        )}
+                        {isCaptain && (
+                            <Button variant="neon" size="sm" onClick={() => setShowRosterModal(true)}>
+                                Manage Roster
                             </Button>
                         )}
                     </div>
@@ -164,30 +268,56 @@ export default function TeamProfile() {
                     </h2>
 
                     {team.members?.length > 0 ? (
-                        <div className="relative pt-20 pb-40 overflow-hidden md:overflow-visible">
+                        <div className="relative pt-6 pb-40 overflow-hidden md:overflow-visible">
                             {/* Perspective Container */}
-                            {/* Perspective Container with Scroll Interaction */}
-                            <div
-                                className="flex justify-center items-center perspective-[1000px] h-[500px] cursor-grab active:cursor-grabbing"
-                                onWheel={(e) => {
-                                    // Scroll to rotate logic
-                                    // Prevent default scroll behavior to isolate carousel rotation
-                                    // e.preventDefault(); // Optional: might block page scroll if not careful
+                            <div className="flex justify-center items-center perspective-[2000px] h-[500px] cursor-grab active:cursor-grabbing">
+                                <div
+                                    className="relative w-full h-[500px] overflow-hidden rounded-3xl group"
+                                    onWheel={(e) => {
+                                        // Scroll to rotate logic
+                                    }}
+                                >
+                                    {(() => {
+                                        const registeredIds = new Set(team.members?.map((m: any) => m._id?.toString()));
+                                        const seenIgns = new Set(team.members?.map((m: any) => m.name?.toLowerCase()));
 
-                                    // Use a ref or state for rotation if needed, but for simplicity we can use local state or MotionValues
-                                    // However, since we're mapping elements, we need a way to update their positions.
-                                    // For a quick implementation without re-architecting the whole state machine:
-                                    // We'll dispatch a custom event or use a Ref to update the 'rotation' state.
-                                }}
-                            >
-                                <Carousel3D teamMembers={team.members} teamInfo={team} />
-                            </div>
+                                        const fullRoster = [...(team.members || [])];
 
-                            {/* Carousel Navigation Hints (Visual only) */}
-                            <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-8 opacity-20 pointer-events-none">
-                                <div className="h-[1px] w-20 bg-gradient-to-r from-transparent to-white" />
-                                <span className="text-[10px] font-black uppercase tracking-[0.8em]">Scroll Roster</span>
-                                <div className="h-[1px] w-20 bg-gradient-to-l from-transparent to-white" />
+                                        // Deduplicate and merge lineup/subs
+                                        const addUnique = (players: any[], type: string) => {
+                                            (players || []).forEach((p: any, idx: number) => {
+                                                if (!p.ign) return;
+
+                                                const idStr = p.userId?.toString();
+                                                const isRegistered = idStr && registeredIds.has(idStr);
+                                                const isInByIgn = seenIgns.has(p.ign.toLowerCase());
+
+                                                if (!isRegistered && !isInByIgn) {
+                                                    fullRoster.push({
+                                                        ...p,
+                                                        _id: `${type}-${idx}-${p.ign.replace(/\s+/g, '-').toLowerCase()}`,
+                                                        name: p.ign,
+                                                        isManual: true,
+                                                        role: type === "lineup" ? "PLAYER" : "SUBSTITUTE"
+                                                    });
+                                                    seenIgns.add(p.ign.toLowerCase());
+                                                }
+                                            });
+                                        };
+
+                                        addUnique(team.lineup, "lineup");
+                                        addUnique(team.substitutes, "sub");
+
+                                        return <Carousel3D teamMembers={fullRoster} teamInfo={team} />;
+                                    })()}
+                                </div>
+
+                                {/* Carousel Navigation Hints (Visual only) */}
+                                <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 flex items-center gap-8 opacity-20 pointer-events-none">
+                                    <div className="h-[1px] w-20 bg-gradient-to-r from-transparent to-white" />
+                                    <span className="text-[10px] font-black uppercase tracking-[0.8em]">Scroll Roster</span>
+                                    <div className="h-[1px] w-20 bg-gradient-to-l from-transparent to-white" />
+                                </div>
                             </div>
                         </div>
                     ) : (
@@ -527,6 +657,242 @@ export default function TeamProfile() {
                             </div>
                         </form>
                     </div>
+                </div>
+            )}
+            {/* Manage Roster Modal */}
+            {showRosterModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center px-4">
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={() => !updatingRoster && setShowRosterModal(false)}
+                        className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+                    />
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        className="relative w-full max-w-2xl bg-zinc-900 border border-white/10 rounded-2xl p-8 shadow-2xl overflow-y-auto max-h-[90vh]"
+                    >
+                        <h2 className="text-2xl font-black uppercase tracking-tighter mb-6 flex items-center gap-3">
+                            <Users className="w-6 h-6 text-primary" /> Manage Team Roster
+                        </h2>
+
+                        <DragDropContext onDragEnd={onDragEnd}>
+                            <form onSubmit={handleRosterUpdate} className="space-y-8">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    {/* Left Column: Available Members */}
+                                    <div className="space-y-4">
+                                        <h3 className="text-sm font-bold uppercase text-white/40 border-b border-white/5 pb-2">Available Players</h3>
+                                        <Droppable droppableId="members">
+                                            {(provided) => (
+                                                <div
+                                                    {...provided.droppableProps}
+                                                    ref={provided.innerRef}
+                                                    className="bg-black/20 rounded-xl p-4 min-h-[400px] border border-white/5 space-y-2 max-h-[500px] overflow-y-auto"
+                                                >
+                                                    {team?.members?.map((member: any, index: number) => (
+                                                        <Draggable key={member._id} draggableId={member._id} index={index}>
+                                                            {(provided, snapshot) => (
+                                                                <div
+                                                                    ref={provided.innerRef}
+                                                                    {...provided.draggableProps}
+                                                                    {...provided.dragHandleProps}
+                                                                    className={`p-3 rounded-lg border flex items-center gap-3 transition-colors ${snapshot.isDragging
+                                                                        ? "bg-primary/20 border-primary shadow-[0_0_15px_rgba(var(--primary-rgb),0.3)]"
+                                                                        : "bg-white/5 border-white/10 hover:border-white/20"
+                                                                        }`}
+                                                                >
+                                                                    <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center overflow-hidden shrink-0 border border-white/10">
+                                                                        {member.image ? (
+                                                                            <Image src={member.image} alt={member.name} width={32} height={32} />
+                                                                        ) : (
+                                                                            <Users className="w-4 h-4 text-white/40" />
+                                                                        )}
+                                                                    </div>
+                                                                    <div className="flex-1 min-w-0">
+                                                                        <span className="block font-bold truncate text-sm">{member.name}</span>
+                                                                        <span className="block text-[8px] uppercase tracking-widest text-white/40">Member</span>
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                        </Draggable>
+                                                    ))}
+                                                    {provided.placeholder}
+                                                    {(!team?.members || team.members.length === 0) && (
+                                                        <div className="text-center py-20 text-white/20 italic text-sm">No members found.</div>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </Droppable>
+                                    </div>
+
+                                    {/* Right Column: Roster Slots */}
+                                    <div className="space-y-6">
+                                        {/* Lineup Section */}
+                                        <div className="space-y-4">
+                                            <h3 className="text-sm font-bold uppercase text-white/40 border-b border-white/5 pb-2">Starting Lineup (5 Slots)</h3>
+                                            <div className="space-y-3">
+                                                {[...Array(5)].map((_, i) => {
+                                                    const player = editRoster.lineup[i] || { ign: "", discord: "" };
+                                                    return (
+                                                        <Droppable key={`lineup-${i}`} droppableId={`lineup-${i}`}>
+                                                            {(provided, snapshot) => (
+                                                                <div
+                                                                    {...provided.droppableProps}
+                                                                    ref={provided.innerRef}
+                                                                    className={`group relative border-2 border-dashed rounded-xl p-3 transition-all ${snapshot.isDraggingOver
+                                                                        ? "border-primary bg-primary/5 animate-pulse"
+                                                                        : player.ign ? "border-primary/30 bg-primary/5 h-auto" : "border-white/5 h-[68px] hover:border-white/20"
+                                                                        }`}
+                                                                >
+                                                                    {player.ign ? (
+                                                                        <div className="flex items-center gap-3">
+                                                                            <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center text-primary font-black shrink-0">
+                                                                                {i + 1}
+                                                                            </div>
+                                                                            <div className="flex-1 space-y-1">
+                                                                                <input
+                                                                                    className="w-full bg-transparent border-none outline-none font-bold text-sm text-primary p-0 h-auto focus:ring-0"
+                                                                                    value={player.ign}
+                                                                                    onChange={(e) => {
+                                                                                        const newLineup = [...editRoster.lineup];
+                                                                                        newLineup[i] = { ...player, ign: e.target.value };
+                                                                                        setEditRoster({ ...editRoster, lineup: newLineup });
+                                                                                    }}
+                                                                                />
+                                                                                <input
+                                                                                    className="w-full bg-transparent border-none outline-none text-[10px] text-white/40 p-0 h-auto focus:ring-0 placeholder:text-white/20"
+                                                                                    placeholder="Enter Discord..."
+                                                                                    value={player.discord}
+                                                                                    onChange={(e) => {
+                                                                                        const newLineup = [...editRoster.lineup];
+                                                                                        newLineup[i] = { ...player, discord: e.target.value };
+                                                                                        setEditRoster({ ...editRoster, lineup: newLineup });
+                                                                                    }}
+                                                                                />
+                                                                            </div>
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => {
+                                                                                    const newLineup = [...editRoster.lineup];
+                                                                                    newLineup[i] = { ign: "", discord: "", userId: undefined };
+                                                                                    setEditRoster({ ...editRoster, lineup: newLineup });
+                                                                                }}
+                                                                                className="opacity-0 group-hover:opacity-100 p-2 hover:text-red-500 transition-all"
+                                                                            >
+                                                                                <Globe className="w-4 h-4 rotate-45" /> {/* Close-like icon */}
+                                                                            </button>
+                                                                        </div>
+                                                                    ) : (
+                                                                        <div className="flex items-center justify-center h-full gap-2 text-white/20 group-hover:text-white/40 transition-colors">
+                                                                            <Users className="w-4 h-4" />
+                                                                            <span className="text-[10px] uppercase font-black tracking-widest">Drop Player {i + 1} Here</span>
+                                                                        </div>
+                                                                    )}
+                                                                    {provided.placeholder}
+                                                                </div>
+                                                            )}
+                                                        </Droppable>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+
+                                        {/* Substitutes Section */}
+                                        <div className="space-y-4">
+                                            <h3 className="text-sm font-bold uppercase text-white/40 border-b border-white/5 pb-2">Substitutes (2 Slots)</h3>
+                                            <div className="space-y-3">
+                                                {[...Array(2)].map((_, i) => {
+                                                    const player = editRoster.substitutes[i] || { ign: "", discord: "" };
+                                                    return (
+                                                        <Droppable key={`sub-${i}`} droppableId={`sub-${i}`}>
+                                                            {(provided, snapshot) => (
+                                                                <div
+                                                                    {...provided.droppableProps}
+                                                                    ref={provided.innerRef}
+                                                                    className={`group relative border-2 border-dashed rounded-xl p-3 transition-all ${snapshot.isDraggingOver
+                                                                        ? "border-blue-500 bg-blue-500/5 animate-pulse"
+                                                                        : player.ign ? "border-blue-500/30 bg-blue-500/5 h-auto" : "border-white/5 h-[68px] hover:border-white/20"
+                                                                        }`}
+                                                                >
+                                                                    {player.ign ? (
+                                                                        <div className="flex items-center gap-3">
+                                                                            <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center text-blue-500 font-black shrink-0">
+                                                                                S
+                                                                            </div>
+                                                                            <div className="flex-1 space-y-1">
+                                                                                <input
+                                                                                    className="w-full bg-transparent border-none outline-none font-bold text-sm text-blue-500 p-0 h-auto focus:ring-0"
+                                                                                    value={player.ign}
+                                                                                    onChange={(e) => {
+                                                                                        const newSubs = [...editRoster.substitutes];
+                                                                                        newSubs[i] = { ...player, ign: e.target.value };
+                                                                                        setEditRoster({ ...editRoster, substitutes: newSubs });
+                                                                                    }}
+                                                                                />
+                                                                                <input
+                                                                                    className="w-full bg-transparent border-none outline-none text-[10px] text-white/40 p-0 h-auto focus:ring-0 placeholder:text-white/20"
+                                                                                    placeholder="Enter Discord..."
+                                                                                    value={player.discord}
+                                                                                    onChange={(e) => {
+                                                                                        const newSubs = [...editRoster.substitutes];
+                                                                                        newSubs[i] = { ...player, discord: e.target.value };
+                                                                                        setEditRoster({ ...editRoster, substitutes: newSubs });
+                                                                                    }}
+                                                                                />
+                                                                            </div>
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => {
+                                                                                    const newSubs = [...editRoster.substitutes];
+                                                                                    newSubs[i] = { ign: "", discord: "", userId: undefined };
+                                                                                    setEditRoster({ ...editRoster, substitutes: newSubs });
+                                                                                }}
+                                                                                className="opacity-0 group-hover:opacity-100 p-2 hover:text-red-500 transition-all"
+                                                                            >
+                                                                                <Globe className="w-4 h-4 rotate-45" />
+                                                                            </button>
+                                                                        </div>
+                                                                    ) : (
+                                                                        <div className="flex items-center justify-center h-full gap-2 text-white/20 group-hover:text-white/40 transition-colors">
+                                                                            <Users className="w-4 h-4" />
+                                                                            <span className="text-[10px] uppercase font-black tracking-widest">Drop Substitute Here</span>
+                                                                        </div>
+                                                                    )}
+                                                                    {provided.placeholder}
+                                                                </div>
+                                                            )}
+                                                        </Droppable>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-4 pt-6 border-t border-white/10">
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        className="flex-1"
+                                        onClick={() => setShowRosterModal(false)}
+                                        disabled={updatingRoster}
+                                    >
+                                        Cancel
+                                    </Button>
+                                    <Button
+                                        type="submit"
+                                        variant="primary"
+                                        className="flex-1"
+                                        isLoading={updatingRoster}
+                                    >
+                                        Save Roster Changes
+                                    </Button>
+                                </div>
+                            </form>
+                        </DragDropContext>
+                    </motion.div>
                 </div>
             )}
         </div>

@@ -47,6 +47,7 @@ export async function POST(req: Request) {
                 if (groupData.options) {
                     groupData.options = groupData.options.map((opt: any) => {
                         const { _id, ...optData } = opt;
+                        // Preserve all fields including inStock
                         return optData;
                     });
                 }
@@ -113,6 +114,7 @@ export async function PUT(req: Request) {
                 if (groupData.options) {
                     groupData.options = groupData.options.map((opt: any) => {
                         const { _id, ...optData } = opt;
+                        // Preserve all fields including inStock
                         return optData;
                     });
                 }

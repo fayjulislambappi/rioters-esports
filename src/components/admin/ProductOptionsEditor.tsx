@@ -8,6 +8,7 @@ import Input from "@/components/ui/Input";
 interface Option {
     name: string;
     price: number;
+    inStock?: boolean;
 }
 
 interface OptionGroup {
@@ -46,7 +47,7 @@ export default function ProductOptionsEditor({ value, onChange }: ProductOptions
 
     const addOption = (groupIndex: number) => {
         const group = value[groupIndex];
-        const newOptions = [...(group.options || []), { name: "", price: 0 }];
+        const newOptions = [...(group.options || []), { name: "", price: 0, inStock: true }];
         updateGroup(groupIndex, { options: newOptions });
     };
 
@@ -137,6 +138,15 @@ export default function ProductOptionsEditor({ value, onChange }: ProductOptions
                                                 value={opt.price}
                                                 onChange={(e) => updateOption(gIdx, oIdx, { price: parseFloat(e.target.value) || 0 })}
                                             />
+                                            <label className="flex items-center gap-2 px-3 py-2 bg-white/5 border border-white/10 rounded-lg cursor-pointer hover:bg-white/10 transition-colors">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={opt.inStock !== false}
+                                                    onChange={(e) => updateOption(gIdx, oIdx, { inStock: e.target.checked })}
+                                                    className="w-4 h-4 rounded border-white/10 bg-white/5 text-primary"
+                                                />
+                                                <span className="text-[10px] font-bold uppercase text-white/60 whitespace-nowrap">In Stock</span>
+                                            </label>
                                             <Button
                                                 variant="ghost"
                                                 size="sm"

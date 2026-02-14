@@ -11,6 +11,7 @@ import { ShoppingCart, Zap, Loader, Minus, Plus, ChevronRight } from "lucide-rea
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useSession, signIn } from "next-auth/react";
+import SizeChart from "@/components/shop/SizeChart";
 
 export default function ProductDetailPage({ params }: { params: Promise<{ slug: string }> }) {
     const { slug } = use(params);
@@ -35,9 +36,33 @@ export default function ProductDetailPage({ params }: { params: Promise<{ slug: 
 
                     // Initialize selections
                     const initialSelections: { [groupName: string]: any } = {};
+
+                    // Add size selection if required
+                    if (data.requiresSize && data.sizeType) {
+                        const sizes = data.sizeType === 'footwear'
+                            ? ['6', '6.5', '7', '7.5', '8', '8.5', '9', '9.5', '10', '10.5', '11', '11.5', '12']
+                            : ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
+
+                        // Find first in-stock size
+                        const sizeGroup = data.optionGroups?.find((g: any) => g.name === 'Size');
+                        const firstInStockName = sizes.find(s => {
+                            const sizeOption = sizeGroup?.options?.find((o: any) => o.name === s);
+                            return sizeOption?.inStock !== false;
+                        }) || sizes[0];
+
+                        const selectedSizeOption = sizeGroup?.options?.find((o: any) => o.name === firstInStockName);
+                        initialSelections['Size'] = {
+                            name: firstInStockName,
+                            price: 0,
+                            inStock: selectedSizeOption ? selectedSizeOption.inStock !== false : true
+                        };
+                    }
+
                     data.optionGroups?.forEach((group: any) => {
                         if (group.type === 'selection' && group.options?.length > 0) {
-                            initialSelections[group.name] = group.options[0];
+                            // Find first in-stock option
+                            const firstInStock = group.options.find((o: any) => o.inStock !== false) || group.options[0];
+                            initialSelections[group.name] = firstInStock;
                         } else if (group.type === 'input') {
                             initialSelections[group.name] = "";
                         }
@@ -60,7 +85,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ slug: 
         if (product) {
             let price = product.price || 0;
             Object.values(selections).forEach(val => {
-                if (typeof val === 'object' && val.price !== undefined) {
+                if (typeof val === 'object' && val.price !== undefined && val.inStock !== false) {
                     price += val.price;
                 }
             });
@@ -149,7 +174,49 @@ export default function ProductDetailPage({ params }: { params: Promise<{ slug: 
                     {/* Right Column: Customization and Checkout */}
                     <div className="bg-zinc-900/50 border border-white/10 rounded-3xl p-8 space-y-8 backdrop-blur-sm">
                         <div className="space-y-6 text-left">
-                            {product.optionGroups?.map((group: any) => (
+                            {/* Size Selection */}
+                            {product.requiresSize && product.sizeType && (
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="text-[12px] font-black uppercase tracking-widest text-white/40 flex items-center gap-2">
+                                            Size
+                                            <span className="text-primary">*</span>
+                                        </h3>
+                                        <SizeChart sizeType={product.sizeType} />
+                                    </div>
+
+                                    <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+                                        {(product.sizeType === 'footwear'
+                                            ? ['6', '6.5', '7', '7.5', '8', '8.5', '9', '9.5', '10', '10.5', '11', '11.5', '12']
+                                            : ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL']
+                                        ).filter(size => {
+                                            const sizeGroup = product.optionGroups?.find((g: any) => g.name === 'Size');
+                                            return sizeGroup?.options?.some((o: any) => o.name === size);
+                                        }).map((size) => {
+                                            // Check stock status
+                                            const sizeGroup = product.optionGroups?.find((g: any) => g.name === 'Size');
+                                            const sizeOption = sizeGroup?.options?.find((o: any) => o.name === size);
+                                            const isOutOfStock = sizeOption?.inStock === false;
+                                            const isSelected = selections['Size']?.name === size;
+
+                                            return (
+                                                <button
+                                                    key={size}
+                                                    onClick={() => handleSelection('Size', { name: size, price: 0, inStock: !isOutOfStock })}
+                                                    className={`px-3 py-3 rounded-xl border text-xs font-black uppercase transition-all duration-300 relative ${isSelected
+                                                        ? "bg-primary text-black border-primary shadow-[0_0_20px_rgba(255,50,50,0.3)]"
+                                                        : "bg-white/5 text-white/60 border-white/10 hover:border-primary/50"
+                                                        }`}
+                                                >
+                                                    <span>{size}</span>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+
+                            {product.optionGroups?.filter((g: any) => g.name !== 'Size').map((group: any) => (
                                 <div key={group.name} className="space-y-4">
                                     <h3 className="text-[12px] font-black uppercase tracking-widest text-white/40 flex items-center gap-2">
                                         {group.name}
@@ -158,20 +225,26 @@ export default function ProductDetailPage({ params }: { params: Promise<{ slug: 
 
                                     {group.type === 'selection' ? (
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                            {group.options?.map((opt: any) => (
-                                                <button
-                                                    key={opt.name}
-                                                    onClick={() => handleSelection(group.name, opt)}
-                                                    className={`px-4 py-3 rounded-xl border text-xs font-black uppercase transition-all duration-300 flex flex-col items-start gap-1 group ${selections[group.name]?.name === opt.name ? "bg-primary text-black border-primary shadow-[0_0_20px_rgba(255,50,50,0.3)]" : "bg-white/5 text-white/60 border-white/10 hover:border-primary/50"}`}
-                                                >
-                                                    <span>{opt.name}</span>
-                                                    {opt.price > 0 && (
-                                                        <span className={selections[group.name]?.name === opt.name ? "text-black/60" : "text-primary group-hover:text-primary transition-colors"}>
-                                                            {product.price > 0 ? `+${opt.price}` : opt.price} Tk
-                                                        </span>
-                                                    )}
-                                                </button>
-                                            ))}
+                                            {group.options?.map((opt: any) => {
+                                                const isSelected = selections[group.name]?.name === opt.name;
+                                                return (
+                                                    <button
+                                                        key={opt.name}
+                                                        onClick={() => handleSelection(group.name, opt)}
+                                                        className={`px-4 py-3 rounded-xl border text-xs font-black uppercase transition-all duration-300 flex flex-col items-start gap-1 group relative ${isSelected
+                                                            ? "bg-primary text-black border-primary shadow-[0_0_20px_rgba(255,50,50,0.3)]"
+                                                            : "bg-white/5 text-white/60 border-white/10 hover:border-primary/50"
+                                                            }`}
+                                                    >
+                                                        <span>{opt.name}</span>
+                                                        {opt.price > 0 && (
+                                                            <span className={isSelected ? "text-black/60" : "text-primary group-hover:text-primary transition-colors"}>
+                                                                {product.price > 0 ? `+${opt.price}` : opt.price} Tk
+                                                            </span>
+                                                        )}
+                                                    </button>
+                                                );
+                                            })}
                                         </div>
                                     ) : (
                                         <Input
@@ -210,9 +283,11 @@ export default function ProductDetailPage({ params }: { params: Promise<{ slug: 
                                         <span className="text-[10px] font-black uppercase text-white/40 tracking-widest block mb-1">Total Amount</span>
                                         <div className="flex flex-col items-end">
                                             <span className="text-4xl font-black text-primary drop-shadow-[0_0_15px_rgba(255,50,50,0.5)]">
-                                                {totalPrice} Tk
+                                                {Object.values(selections).some((sel: any) => sel?.inStock === false)
+                                                    ? "OUT OF STOCK"
+                                                    : `${totalPrice} Tk`
+                                                }
                                             </span>
-                                            <span className="text-[10px] font-bold text-white/20 uppercase mt-1">In Stock: Unlimited</span>
                                         </div>
                                     </div>
                                 </div>

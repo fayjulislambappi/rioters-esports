@@ -12,7 +12,8 @@ import {
     Settings,
     LogOut,
     ShoppingBag,
-    FileText
+    FileText,
+    ClipboardList
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Button from "@/components/ui/Button";
@@ -22,6 +23,7 @@ const adminNavItems = [
     { name: "Games", href: "/admin/games", icon: Gamepad },
     { name: "Tournaments", href: "/admin/tournaments", icon: Trophy },
     { name: "Teams", href: "/admin/teams", icon: Shield },
+    { name: "Applications", href: "/admin/teams/applications", icon: ClipboardList },
     { name: "Users", href: "/admin/users", icon: Users },
     { name: "Shop", href: "/admin/shop", icon: ShoppingBag },
     { name: "Content", href: "/admin/content", icon: FileText },
@@ -58,7 +60,7 @@ export default function AdminSidebar() {
                         );
                     })}
                     <button
-                        onClick={() => signOut({ callbackUrl: "/" })}
+                        onClick={() => signOut({ callbackUrl: "/admin-login" })}
                         className="w-full flex items-center px-4 py-3 rounded-lg transition-colors group text-white/60 hover:bg-white/5 hover:text-white"
                     >
                         <LogOut className="w-5 h-5 mr-3 text-white/40 group-hover:text-white" />

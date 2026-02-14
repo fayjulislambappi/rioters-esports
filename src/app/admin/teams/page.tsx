@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
-import { Search, Shield, Trash2, Ban, Edit, X, Check, CheckCircle, XCircle } from "lucide-react";
+import { Search, Shield, Trash2, Ban, Edit, X, Check, CheckCircle, XCircle, ClipboardList } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import ImageUpload from "@/components/ui/ImageUpload";
@@ -154,9 +154,11 @@ export default function AdminTeamsPage() {
             <div className="flex justify-between items-center mb-8">
                 <h1 className="text-3xl font-black uppercase tracking-tighter">Manage Teams</h1>
                 <div className="flex gap-4">
-                    {/* <Link href="/admin/teams/applications">
-                        <Button variant="outline" className="flex items-center gap-2"> Applications </Button>
-                    </Link> Obsolete with new flow? keeping for now */}
+                    <Link href="/admin/teams/applications">
+                        <Button variant="outline" className="flex items-center gap-2">
+                            <ClipboardList className="w-4 h-4" /> Applications
+                        </Button>
+                    </Link>
                     <Button variant="primary" onClick={() => setShowCreateModal(true)}>
                         Create Team
                     </Button>

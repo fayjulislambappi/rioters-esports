@@ -12,16 +12,24 @@ export async function GET(
     try {
         const { id } = await params;
         await connectDB();
-        const team = await Team.findById(id).populate('captainId', 'name email').populate('members', 'name email image role');
+        const team = await Team.findById(id)
+            .populate('captainId', 'name email')
+            .populate('members', 'name email image role teams');
 
         if (!team) {
             return NextResponse.json({ error: "Team not found" }, { status: 404 });
         }
 
-        // Filter out null members (e.g. if a user was deleted)
+        // Add team-specific role to each member
         const teamObj = team.toObject();
         if (teamObj.members) {
-            teamObj.members = teamObj.members.filter((m: any) => m !== null);
+            teamObj.members = teamObj.members.filter((m: any) => m !== null).map((member: any) => {
+                const teamData = member.teams?.find((t: any) => t.teamId.toString() === id);
+                return {
+                    ...member,
+                    teamRole: teamData?.role || "MEMBER"
+                };
+            });
         }
 
         return NextResponse.json(teamObj);

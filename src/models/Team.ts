@@ -9,8 +9,8 @@ export interface ITeam extends Document {
     captainId: mongoose.Types.ObjectId;
     captainDiscord: string;
     members: mongoose.Types.ObjectId[]; // Includes captain
-    lineup?: { ign: string; discord: string }[];
-    substitutes?: { ign: string; discord: string }[];
+    lineup?: { ign: string; discord: string; userId?: string | mongoose.Types.ObjectId }[];
+    substitutes?: { ign: string; discord: string; userId?: string | mongoose.Types.ObjectId }[];
     gameFocus?: string; // Primary game they play
     recruiting: boolean;
     socials?: {
@@ -19,6 +19,7 @@ export interface ITeam extends Document {
     };
     isOfficial?: boolean;
     isBanned?: boolean;
+    status?: "PENDING" | "APPROVED" | "REJECTED";
 }
 
 const TeamSchema = new Schema<ITeam>(
@@ -35,11 +36,13 @@ const TeamSchema = new Schema<ITeam>(
         recruiting: { type: Boolean, default: false },
         lineup: [{
             ign: { type: String, required: true },
-            discord: { type: String, required: true }
+            discord: { type: String, required: true },
+            userId: { type: Schema.Types.ObjectId, ref: "User" }
         }], // Main roster: IGN + Discord
         substitutes: [{
             ign: { type: String },
-            discord: { type: String }
+            discord: { type: String },
+            userId: { type: Schema.Types.ObjectId, ref: "User" }
         }], // Subs: IGN + Discord
         socials: {
             twitter: String,

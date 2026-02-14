@@ -310,11 +310,11 @@ export default function EditTeamPage({ params }: { params: Promise<{ id: string 
                                                 <div>
                                                     <div className="flex items-center gap-2">
                                                         <p className="font-bold text-sm">{member.name}</p>
-                                                        {(member.role === 'CAPTAIN' || member._id === formData.captainId || (typeof formData.captainId === 'object' && (formData.captainId as any)?._id === member._id)) && (
+                                                        {(member.teamRole === 'CAPTAIN' || member._id === formData.captainId || (typeof formData.captainId === 'object' && (formData.captainId as any)?._id === member._id)) && (
                                                             <span className="text-[9px] font-black bg-primary/20 text-primary px-1.5 py-0.5 rounded leading-none border border-primary/20">TEAM_LEADER</span>
                                                         )}
                                                     </div>
-                                                    <p className="text-xs text-white/40 uppercase">{member.role === 'MEMBER' ? 'TEAM_MEMBER' : member.role || "TEAM_MEMBER"}</p>
+                                                    <p className="text-xs text-white/40 uppercase">{member.teamRole === 'MEMBER' ? 'TEAM_MEMBER' : member.teamRole || "TEAM_MEMBER"}</p>
                                                 </div>
                                             </div>
                                             <Button
@@ -410,7 +410,7 @@ export default function EditTeamPage({ params }: { params: Promise<{ id: string 
                                                 });
                                                 if (res.ok) {
                                                     toast.success("Member added successfully");
-                                                    setMembers([...members, { ...selectedMemberToAdd, role: selectedRole }]);
+                                                    setMembers([...members, { ...selectedMemberToAdd, teamRole: selectedRole }]);
                                                     setSelectedMemberToAdd(null);
                                                     setMemberSearch("");
                                                 } else {

@@ -10,6 +10,7 @@ import { Package, ArrowLeft, Save } from "lucide-react";
 import Link from "next/link";
 import ImageUpload from "@/components/ui/ImageUpload";
 import ProductOptionsEditor from "@/components/admin/ProductOptionsEditor";
+import SizeStockManager from "@/components/admin/SizeStockManager";
 
 export default function NewProductPage() {
     const router = useRouter();
@@ -20,7 +21,9 @@ export default function NewProductPage() {
         category: "Game Top-up",
         image: "",
         description: "",
-        optionGroups: []
+        optionGroups: [],
+        requiresSize: false,
+        sizeType: null
     });
 
     const categories = [
@@ -141,6 +144,54 @@ export default function NewProductPage() {
                                 value={formData.image}
                                 onChange={(url) => setFormData({ ...formData, image: url })}
                             />
+                        </div>
+                    </div>
+
+                    {/* Size Configuration */}
+                    <div className="pt-6 border-t border-white/5">
+                        <h3 className="text-sm font-black uppercase text-white/60 mb-4">Size Configuration</h3>
+                        <div className="space-y-4">
+                            <label className="flex items-center gap-3 cursor-pointer group">
+                                <input
+                                    type="checkbox"
+                                    checked={formData.requiresSize}
+                                    onChange={(e) => setFormData({
+                                        ...formData,
+                                        requiresSize: e.target.checked,
+                                        sizeType: e.target.checked ? 'apparel' : null
+                                    })}
+                                    className="w-5 h-5 rounded border-white/20 bg-black/40 text-primary focus:ring-primary focus:ring-offset-0"
+                                />
+                                <span className="text-sm font-bold text-white/80 group-hover:text-white transition-colors">
+                                    This product requires size selection
+                                </span>
+                            </label>
+
+                            {formData.requiresSize && (
+                                <div className="space-y-2 pl-8">
+                                    <label className="text-xs font-bold uppercase text-white/60">Size Type</label>
+                                    <select
+                                        className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 focus:outline-none focus:border-primary text-white"
+                                        value={formData.sizeType || 'apparel'}
+                                        onChange={(e) => setFormData({ ...formData, sizeType: e.target.value })}
+                                    >
+                                        <option value="footwear">Footwear (Boots, Shoes)</option>
+                                        <option value="apparel">Apparel (Jersey, T-Shirt, Hoodie)</option>
+                                    </select>
+                                    <p className="text-[10px] text-white/40 italic">
+                                        {formData.sizeType === 'footwear'
+                                            ? 'Sizes: 6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10, 10.5, 11, 11.5, 12'
+                                            : 'Sizes: XS, S, M, L, XL, XXL, XXXL'
+                                        }
+                                    </p>
+
+                                    <SizeStockManager
+                                        sizeType={formData.sizeType}
+                                        optionGroups={formData.optionGroups || []}
+                                        onChange={(optionGroups) => setFormData({ ...formData, optionGroups })}
+                                    />
+                                </div>
+                            )}
                         </div>
                     </div>
 
