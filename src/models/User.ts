@@ -16,6 +16,15 @@ export interface IUser extends Document {
         role: "MEMBER" | "CAPTAIN" | "ADMIN" | "PLAYER" | "SUBSTITUTE";
     }[];
     isBanned: boolean;
+    resetPasswordToken?: string;
+    resetPasswordExpires?: Date;
+    address?: {
+        street?: string;
+        city?: string;
+        state?: string;
+        zip?: string;
+        country?: string;
+    };
     createdAt: Date;
     updatedAt: Date;
 }
@@ -44,6 +53,15 @@ const UserSchema = new Schema<IUser>(
             role: { type: String, enum: ["MEMBER", "CAPTAIN", "ADMIN", "PLAYER", "SUBSTITUTE"], default: "MEMBER" }
         }],
         isBanned: { type: Boolean, default: false },
+        resetPasswordToken: { type: String },
+        resetPasswordExpires: { type: Date },
+        address: {
+            street: { type: String },
+            city: { type: String },
+            state: { type: String },
+            zip: { type: String },
+            country: { type: String },
+        },
     },
     { timestamps: true },
 );

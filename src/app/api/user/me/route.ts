@@ -144,9 +144,9 @@ export async function PATCH(req: Request) {
         }
 
         const body = await req.json();
-        const { name, image } = body;
+        const { name, image, address } = body;
 
-        if (!name && !image) {
+        if (!name && !image && !address) {
             return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
         }
 
@@ -155,6 +155,7 @@ export async function PATCH(req: Request) {
         const updateData: any = {};
         if (name) updateData.name = name;
         if (image) updateData.image = image;
+        if (address) updateData.address = address;
 
         const updatedUser = await User.findByIdAndUpdate(
             session.user.id,

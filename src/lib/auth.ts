@@ -64,17 +64,21 @@ export const authOptions: NextAuthOptions = {
                     email: user.email,
                     image: user.image,
                     role: user.role, // Keep for compatibility
-                    roles: user.roles || [user.role] // Multi-role support
+                    roles: user.roles || [user.role], // Multi-role support
+                    provider: "credentials"
                 };
             },
         }),
     ],
     callbacks: {
-        async jwt({ token, user }) {
+        async jwt({ token, user, account }) {
             if (user) {
                 token.role = user.role;
                 token.roles = (user as any).roles;
                 token.id = user.id;
+            }
+            if (account) {
+                token.provider = account.provider;
             }
             return token;
         },
@@ -83,6 +87,7 @@ export const authOptions: NextAuthOptions = {
                 session.user.role = token.role as any;
                 session.user.roles = token.roles as any;
                 session.user.id = token.id as string;
+                session.user.provider = token.provider as string;
             }
             return session;
         },

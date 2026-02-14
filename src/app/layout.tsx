@@ -42,11 +42,16 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 }
 
-export default function RootLayout({
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const session = await getServerSession(authOptions);
+
   return (
     <html lang="en" className="dark">
       <body
@@ -56,7 +61,7 @@ export default function RootLayout({
           orbitron.variable,
         )}
       >
-        <Providers>
+        <Providers session={session}>
           <ConditionalLayout>
             {children}
           </ConditionalLayout>

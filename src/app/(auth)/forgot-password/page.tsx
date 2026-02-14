@@ -1,21 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Link from "next/link";
-import { Lock, Mail, AlertCircle } from "lucide-react";
+import { Mail, AlertCircle, CheckCircle2, ArrowLeft } from "lucide-react";
 import AuthLayout from "@/components/auth/AuthLayout";
 import { motion } from "framer-motion";
+import toast from "react-hot-toast";
 
-export default function LoginPage() {
+export default function ForgotPasswordPage() {
     const router = useRouter();
     const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
+    const [success, setSuccess] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -23,18 +23,23 @@ export default function LoginPage() {
         setError("");
 
         try {
-            const res = await signIn("credentials", {
-                redirect: false,
-                email,
-                password,
-                loginType: "user",
+            const res = await fetch("/api/auth/forgot-password", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email }),
             });
 
-            if (res?.error) {
-                setError("Invalid email or password");
+            const data = await res.json();
+
+            if (!res.ok) {
+                setError(data.error || "An error occurred");
             } else {
-                router.push("/profile");
-                router.refresh();
+                setSuccess(true);
+                toast.success("Reset code sent!");
+                // Redirect after a short delay
+                setTimeout(() => {
+                    router.push(`/reset-password?email=${encodeURIComponent(email)}`);
+                }, 2000);
             }
         } catch (err) {
             setError("An unexpected error occurred");
@@ -45,9 +50,9 @@ export default function LoginPage() {
 
     return (
         <AuthLayout
-            title={<>Welcome to <span className="text-primary italic">Rioters</span></>}
-            subtitle="Enter your credentials to access our community."
-            brandTag="Member Login"
+            title={<>Reset <span className="text-primary italic">Password</span></>}
+            subtitle="Enter your email to receive a 6-digit verification code."
+            brandTag="Security"
         >
             <form className="space-y-6" onSubmit={handleSubmit}>
                 {error && (
@@ -60,6 +65,16 @@ export default function LoginPage() {
                     </motion.div>
                 )}
 
+                {success && (
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="flex items-center gap-2 text-green-500 bg-green-500/10 p-3 rounded border border-green-500/20 text-sm font-medium"
+                    >
+                        <CheckCircle2 className="w-4 h-4" /> Verification code sent! Redirecting...
+                    </motion.div>
+                )}
+
                 <div className="space-y-4">
                     <motion.div
                         initial={{ opacity: 0, x: -10 }}
@@ -69,44 +84,15 @@ export default function LoginPage() {
                     >
                         <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/30" />
                         <Input
-                            id="email-address"
+                            id="email"
                             name="email"
-                            type="text"
+                            type="email"
                             required
-                            placeholder="Username or Email"
+                            placeholder="Email Address"
                             className="pl-11 bg-white/5 border-white/10 focus:border-primary/50 transition-all duration-300"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                         />
-                    </motion.div>
-
-                    <motion.div
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.5 }}
-                        className="relative"
-                    >
-                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/30" />
-                        <Input
-                            id="password"
-                            name="password"
-                            type="password"
-                            required
-                            placeholder="Password"
-                            className="pl-11 bg-white/5 border-white/10 focus:border-primary/50 transition-all duration-300"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                        />
-                    </motion.div>
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 0.55 }}
-                        className="flex justify-end"
-                    >
-                        <Link href="/forgot-password" title="Recover your account" className="text-xs text-white/40 hover:text-primary transition-colors uppercase tracking-widest font-bold">
-                            Forgot Password?
-                        </Link>
                     </motion.div>
                 </div>
 
@@ -120,8 +106,9 @@ export default function LoginPage() {
                         variant="primary"
                         className="w-full justify-center group h-12 text-base font-bold uppercase tracking-widest bg-primary hover:bg-black hover:text-primary border-primary transition-all duration-500 shadow-[0_0_20px_rgba(255,46,46,0.3)] hover:shadow-[0_0_30px_rgba(255,46,46,0.5)]"
                         isLoading={loading}
+                        disabled={success}
                     >
-                        Sign In
+                        Send Code
                     </Button>
                 </motion.div>
 
@@ -129,11 +116,11 @@ export default function LoginPage() {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.8 }}
-                    className="text-center text-sm"
+                    className="text-center"
                 >
-                    <span className="text-white/40 font-medium">New here? </span>
-                    <Link href="/register" className="text-white hover:text-primary font-black transition-colors uppercase tracking-tight">
-                        Join Us
+                    <Link href="/login" className="text-white/40 hover:text-white flex items-center justify-center gap-2 text-sm transition-colors group">
+                        <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+                        Back to Login
                     </Link>
                 </motion.div>
             </form>
