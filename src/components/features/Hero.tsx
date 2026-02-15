@@ -8,6 +8,14 @@ import { ChevronDown } from "lucide-react";
 import { useState, useEffect } from "react";
 import NextImage from "next/image";
 
+interface HeroProps {
+    galleryImages: string[];
+    galleryStyle: string;
+    galleryMode: string;
+    slicedImageUrl: string;
+    mobileHeroUrl: string;
+}
+
 export default function Hero({
     galleryImages = [],
     galleryStyle = "ARCH",
