@@ -180,11 +180,12 @@ export default function AdminSettingsPage() {
                             >
                                 <option value="INDIVIDUAL">Individual Images</option>
                                 <option value="SLICED">Sliced Master Image</option>
+                                <option value="FULL">Full Image (No Slice)</option>
                             </select>
                         </div>
                     </div>
 
-                    {galleryMode === "SLICED" ? (
+                    {galleryMode === "SLICED" || galleryMode === "FULL" ? (
                         <div className="space-y-4">
                             <ImageUpload
                                 label="Master Sliced Image"
@@ -192,7 +193,7 @@ export default function AdminSettingsPage() {
                                 onChange={setSlicedImageUrl}
                                 aspectRatio={16 / 9}
                             />
-                            <p className="text-xs text-gray-500">This image will be sliced across the gallery cards.</p>
+                            <p className="text-xs text-gray-500">{galleryMode === "SLICED" ? "This image will be sliced across the gallery cards." : "This image will be shown as a full-screen cinematic banner."}</p>
                         </div>
                     ) : (
                         <div className="space-y-6">
