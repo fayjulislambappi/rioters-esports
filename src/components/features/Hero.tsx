@@ -60,63 +60,74 @@ export default function Hero({ galleryImages = [], galleryStyle = "ARCH", galler
             {/* Arched/Diamond Gallery Background */}
             {/* Arched/Diamond Gallery Background */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                {mode === "FULL" && masterImage ? (
+                    <div className="absolute inset-0 w-full h-full overflow-hidden">
+                        <NextImage
+                            src={masterImage}
+                            alt="Hero Banner"
+                            fill
+                            className="object-cover opacity-60"
+                            priority
+                        />
+                    </div>
+                ) : (
+                    <div className="flex justify-center items-center gap-[var(--hero-gap)] flex-nowrap pt-0 md:pt-10">
+                        {Array.from({ length: 10 }).map((_, index) => {
+                            const { y, scaleY } = getLayoutProps(index);
+                            // Visibility logic: 
+                            // Mobile: Show 8 center items (1-8)
+                            // Others: Show all
+                            const isHiddenMobile = index === 0 || index === 9;
+                            const isHiddenTablet = false;
 
-                <div className="flex justify-center items-center gap-[var(--hero-gap)] flex-nowrap pt-0 md:pt-10">
-                    {Array.from({ length: 10 }).map((_, index) => {
-                        const { y, scaleY } = getLayoutProps(index);
-                        // Visibility logic: 
-                        // Mobile: Show 8 center items (1-8)
-                        // Others: Show all
-                        const isHiddenMobile = index === 0 || index === 9;
-                        const isHiddenTablet = false;
-
-                        return (
-                            <motion.div
-                                key={`${style}-${index}`}
-                                initial={{ opacity: 0, scale: 0.8 }}
-                                animate={{
-                                    opacity: 1,
-                                    scale: 1,
-                                    y: y,
-                                    scaleY: scaleY
-                                }}
-                                transition={{
-                                    duration: 1.2,
-                                    delay: index * 0.05,
-                                    ease: [0.2, 0.65, 0.3, 0.9]
-                                }}
-                                className={`relative overflow-hidden border border-white/10 rounded-lg bg-white/5 shrink-0 transition-all duration-500 ${isHiddenMobile ? 'hidden sm:block' : ''} ${isHiddenTablet ? 'sm:hidden lg:block' : ''}`}
-                                style={{
-                                    width: 'var(--hero-slice-w)',
-                                    height: 'var(--hero-slice-h)',
-                                }}
-                            >
-                                {mode === "SLICED" && masterImage ? (
-                                    <div
-                                        className="w-full h-full"
-                                        style={{
-                                            backgroundImage: `url(${masterImage})`,
-                                            // Calculate total width based on 10 items regardless of visibility to keep alignment correct
-                                            backgroundSize: `calc((10 * var(--hero-slice-w)) + (9 * var(--hero-gap))) calc(var(--hero-slice-h) / ${scaleY})`,
-                                            backgroundPosition: `calc(-1 * ${index} * (var(--hero-slice-w) + var(--hero-gap))) calc(-1 * ${y}px / ${scaleY})`,
-                                            backgroundRepeat: 'no-repeat'
-                                        }}
-                                    />
-                                ) : images[index] && (
-                                    <NextImage
-                                        src={images[index]}
-                                        alt={`Hero Gallery ${index + 1}`}
-                                        fill
-                                        className="object-cover"
-                                        priority={index > 3 && index < 7}
-                                        sizes="10vw"
-                                    />
-                                )}
-                                <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-40" />
-                            </motion.div>
-                        );
-                    })}
-                </div>
+                            return (
+                                <motion.div
+                                    key={`${style}-${index}`}
+                                    initial={{ opacity: 0, scale: 0.8 }}
+                                    animate={{
+                                        opacity: 1,
+                                        scale: 1,
+                                        y: y,
+                                        scaleY: scaleY
+                                    }}
+                                    transition={{
+                                        duration: 1.2,
+                                        delay: index * 0.05,
+                                        ease: [0.2, 0.65, 0.3, 0.9]
+                                    }}
+                                    className={`relative overflow-hidden border border-white/10 rounded-lg bg-white/5 shrink-0 transition-all duration-500 ${isHiddenMobile ? 'hidden sm:block' : ''} ${isHiddenTablet ? 'sm:hidden lg:block' : ''}`}
+                                    style={{
+                                        width: 'var(--hero-slice-w)',
+                                        height: 'var(--hero-slice-h)',
+                                    }}
+                                >
+                                    {mode === "SLICED" && masterImage ? (
+                                        <div
+                                            className="w-full h-full"
+                                            style={{
+                                                backgroundImage: `url(${masterImage})`,
+                                                // Calculate total width based on 10 items regardless of visibility to keep alignment correct
+                                                backgroundSize: `calc((10 * var(--hero-slice-w)) + (9 * var(--hero-gap))) calc(var(--hero-slice-h) / ${scaleY})`,
+                                                backgroundPosition: `calc(-1 * ${index} * (var(--hero-slice-w) + var(--hero-gap))) calc(-1 * ${y}px / ${scaleY})`,
+                                                backgroundRepeat: 'no-repeat'
+                                            }}
+                                        />
+                                    ) : images[index] && (
+                                        <NextImage
+                                            src={images[index]}
+                                            alt={`Hero Gallery ${index + 1}`}
+                                            fill
+                                            className="object-cover"
+                                            priority={index > 3 && index < 7}
+                                            sizes="10vw"
+                                        />
+                                    )}
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-40" />
+                                </motion.div>
+                            );
+                        })}
+                    </div>
+                )}
             </div>
 
             {/* Overlays */}
