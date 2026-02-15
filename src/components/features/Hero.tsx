@@ -45,15 +45,15 @@ export default function Hero({ galleryImages = [], galleryStyle = "ARCH", galler
             const scale = 1 - (diff * 0.08);
             return { y: 0, scaleY: scale };
         } else {
-            // "ARCH" style: Parabolic curve (Bridge)
-            const intensity = 8;
+            // "ARCH" style: Parabolic curve (Bridge) - reduced intensity for better fit
+            const intensity = 2;
             const translateY = Math.pow(diff, 2) * intensity;
             return { y: translateY, scaleY: 1 };
         }
     };
 
     return (
-        <section className="relative h-[90vh] flex flex-col items-center justify-center overflow-hidden bg-black">
+        <section className="relative h-screen min-h-[600px] flex flex-col items-center justify-center overflow-hidden bg-black">
             {/* Arched/Diamond Gallery Background */}
             {/* Arched/Diamond Gallery Background */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -62,11 +62,10 @@ export default function Hero({ galleryImages = [], galleryStyle = "ARCH", galler
                     {Array.from({ length: 10 }).map((_, index) => {
                         const { y, scaleY } = getLayoutProps(index);
                         // Visibility logic: 
-                        // Mobile: Show 3 center items (4,5,6) - Reduced from 4 to 3 for better fit
-                        // Tablet: Show 5 items (3,4,5,6,7)
-                        // Desktop: Show all
-                        const isHiddenMobile = index < 4 || index > 6;
-                        const isHiddenTablet = index < 3 || index > 7;
+                        // Mobile: Show 8 center items (1-8)
+                        // Others: Show all
+                        const isHiddenMobile = index === 0 || index === 9;
+                        const isHiddenTablet = false;
 
                         return (
                             <motion.div
@@ -121,7 +120,7 @@ export default function Hero({ galleryImages = [], galleryStyle = "ARCH", galler
             <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent pointer-events-none z-10" />
 
             {/* Content Container */}
-            <div className="container px-4 text-center z-20 mt-auto mb-24 md:mb-32">
+            <div className="container px-4 text-center z-20 mt-auto mb-10 md:mb-32">
                 <motion.div
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}

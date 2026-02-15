@@ -58,9 +58,9 @@
   --foreground: #ededed;
 
   /* Hero Component Variables */
-  --hero-slice-w: 60px;
-  --hero-slice-h: 270px;
-  --hero-gap: 8px;
+  --hero-slice-w: 40px;
+  --hero-slice-h: 520px;
+  --hero-gap: 3px;
 }
 
 @media (min-width: 768px) {

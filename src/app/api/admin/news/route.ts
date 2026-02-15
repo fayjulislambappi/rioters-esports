@@ -24,10 +24,21 @@ export async function POST(req: Request) {
         const body = await req.json();
         await connectDB();
 
-        if (!body.slug) {
-            body.slug = body.title.toLowerCase().replace(/ /g, "-").replace(/[^\w-]+/g, "");
+        // 🛡️ Enhanced Slug Generation with Collision Check
+        let slug = body.slug || body.title.toLowerCase().replace(/ /g, "-").replace(/[^\w-]+/g, "");
+        let existing = await News.findOne({ slug });
+        let counter = 1;
+
+        while (existing) {
+            const newSlug = `${slug}-${counter}`;
+            existing = await News.findOne({ slug: newSlug });
+            if (!existing) {
+                slug = newSlug;
+            }
+            counter++;
         }
 
+        body.slug = slug;
         const article = await News.create(body);
         return NextResponse.json(article, { status: 201 });
     } catch (error: any) {
