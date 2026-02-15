@@ -23,6 +23,7 @@ const adminNavItems = [
     { name: "Games", href: "/admin/games", icon: Gamepad },
     { name: "Tournaments", href: "/admin/tournaments", icon: Trophy },
     { name: "Teams", href: "/admin/teams", icon: Shield },
+    { name: "Players", href: "/admin/players", icon: Users },
     { name: "Applications", href: "/admin/teams/applications", icon: ClipboardList },
     { name: "Users", href: "/admin/users", icon: Users },
     { name: "Shop", href: "/admin/shop", icon: ShoppingBag },

@@ -36,6 +36,17 @@ export async function POST(req: Request) {
         const team = await Team.findById(teamId);
         if (!team) return NextResponse.json({ error: "Team not found" }, { status: 404 });
 
+        // Check Roster Limits
+        const { getGameRosterLimit } = require("@/lib/game-config");
+        const limits = getGameRosterLimit(team.gameFocus);
+        const currentTotal = (team.members || []).length;
+
+        if (currentTotal >= limits.maxTotal) {
+            return NextResponse.json({
+                error: `This team is already full. Maximum players for ${team.gameFocus} is ${limits.maxTotal}.`
+            }, { status: 400 });
+        }
+
         const user = await User.findById(session.user.id);
         const existingTeamForGame = user?.teams?.find((t: any) => t.game === team.gameFocus);
 

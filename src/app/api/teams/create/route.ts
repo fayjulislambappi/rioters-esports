@@ -39,10 +39,21 @@ export async function POST(req: Request) {
             captainDiscord, captainIgn,
             sub1_ign, sub1_discord,
             sub2_ign, sub2_discord,
+            sub3_ign, sub3_discord,
+            sub4_ign, sub4_discord,
+            sub5_ign, sub5_discord,
+            sub6_ign, sub6_discord,
+            sub7_ign, sub7_discord,
             p2_ign, p2_discord,
             p3_ign, p3_discord,
             p4_ign, p4_discord,
-            p5_ign, p5_discord
+            p5_ign, p5_discord,
+            p6_ign, p6_discord,
+            p7_ign, p7_discord,
+            p8_ign, p8_discord,
+            p9_ign, p9_discord,
+            p10_ign, p10_discord,
+            p11_ign, p11_discord
         } = body;
 
         // Basic Validation
@@ -50,20 +61,61 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "Name, Slug, Game Focus, Captain Discord, and Captain IGN are required." }, { status: 400 });
         }
 
-        // Game Specific Validation (5v5 Roster)
-        const is5v5 = gameFocus === "Valorant" || gameFocus === "Counter-Strike 2" || gameFocus === "CS2";
-        if (is5v5) {
-            if (!captainIgn) {
-                return NextResponse.json({
-                    error: `Captain IGN is required for ${gameFocus}.`
-                }, { status: 400 });
-            }
-            if (!p2_ign || !p2_discord || !p3_ign || !p3_discord || !p4_ign || !p4_discord || !p5_ign || !p5_discord) {
-                return NextResponse.json({
-                    error: `For ${gameFocus}, a full starting lineup (Player 2-5) with Discord IDs is required.`
-                }, { status: 400 });
-            }
+        // Game Specific Validation
+        const { getGameRosterLimit } = require("@/lib/game-config");
+        const limits = getGameRosterLimit(gameFocus);
 
+        // Prepare Lineup (Starting Players)
+        const lineup = [];
+        if (captainIgn && captainIgn.trim()) lineup.push({ ign: captainIgn.trim(), discord: captainDiscord.trim() });
+
+        // Add other players based on limits (Starting lineup excluding captain)
+        const playerKeys = [
+            { ign: p2_ign, discord: p2_discord },
+            { ign: p3_ign, discord: p3_discord },
+            { ign: p4_ign, discord: p4_discord },
+            { ign: p5_ign, discord: p5_discord },
+            { ign: p6_ign, discord: p6_discord },
+            { ign: p7_ign, discord: p7_discord },
+            { ign: p8_ign, discord: p8_discord },
+            { ign: p9_ign, discord: p9_discord },
+            { ign: p10_ign, discord: p10_discord },
+            { ign: p11_ign, discord: p11_discord }
+        ];
+
+        // Check required starters
+        for (let i = 0; i < limits.starters - 1; i++) {
+            const p = playerKeys[i];
+            if (!p || !p.ign || !p.ign.trim() || !p.discord || !p.discord.trim()) {
+                return NextResponse.json({
+                    error: `For ${gameFocus}, a full starting lineup of ${limits.starters} players is required.`
+                }, { status: 400 });
+            }
+            lineup.push({ ign: p.ign.trim(), discord: p.discord.trim() });
+        }
+
+        // Prepare Substitutes
+        const substitutes = [];
+        const subKeys = [
+            { ign: sub1_ign, discord: sub1_discord },
+            { ign: sub2_ign, discord: sub2_discord },
+            { ign: sub3_ign, discord: sub3_discord },
+            { ign: sub4_ign, discord: sub4_discord },
+            { ign: sub5_ign, discord: sub5_discord },
+            { ign: sub6_ign, discord: sub6_discord },
+            { ign: sub7_ign, discord: sub7_discord }
+        ];
+
+        for (const s of subKeys) {
+            if (s.ign && s.ign.trim()) {
+                substitutes.push({ ign: s.ign.trim(), discord: s.discord?.trim() });
+            }
+        }
+
+        if (substitutes.length > limits.maxSubstitutes) {
+            return NextResponse.json({
+                error: `For ${gameFocus}, you can have a maximum of ${limits.maxSubstitutes} substitutes.`
+            }, { status: 400 });
         }
 
         // Check for duplicate name or slug
@@ -75,15 +127,6 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "Team name or handle already taken." }, { status: 400 });
         }
 
-        // Prepare Substitutes
-        const substitutes = [];
-        if (sub1_ign && sub1_ign.trim()) substitutes.push({ ign: sub1_ign.trim(), discord: sub1_discord?.trim() });
-        if (sub2_ign && sub2_ign.trim()) substitutes.push({ ign: sub2_ign.trim(), discord: sub2_discord?.trim() });
-
-        // Prepare Lineup (Captain + 4 others)
-        const lineup = [];
-        if (captainIgn && captainIgn.trim()) lineup.push({ ign: captainIgn.trim(), discord: captainDiscord.trim() });
-        // Lineup logic remains for display, but real member links are handled below
 
         // 1. Create Team with PENDING status
         const newTeam = await Team.create({

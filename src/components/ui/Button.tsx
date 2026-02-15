@@ -4,16 +4,18 @@ import { motion, HTMLMotionProps } from "framer-motion";
 import { cn } from "@/lib/utils";
 import React from "react";
 
-interface ButtonProps extends HTMLMotionProps<"button"> {
+interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
     variant?: "primary" | "secondary" | "outline" | "ghost" | "neon";
     size?: "sm" | "md" | "lg";
     isLoading?: boolean;
+    disabled?: boolean;
+    asDiv?: boolean;
     children: React.ReactNode;
 }
 
-const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+const Button = React.forwardRef<HTMLElement, ButtonProps>(
     (
-        { className, variant = "primary", size = "md", isLoading, children, ...props },
+        { className, variant = "primary", size = "md", isLoading, disabled, asDiv, children, ...props },
         ref,
     ) => {
         const variants = {
@@ -30,25 +32,28 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
             lg: "h-12 px-8 text-base",
         };
 
+        const Component = asDiv ? motion.div : motion.button as any;
+
         return (
-            <motion.button
-                ref={ref}
+            <Component
+                ref={ref as any}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 className={cn(
-                    "relative inline-flex items-center justify-center rounded-md font-bold uppercase tracking-wider transition-colors disabled:opacity-50 disabled:pointer-events-none",
+                    "relative inline-flex items-center justify-center rounded-md font-bold uppercase tracking-wider transition-colors disabled:opacity-50 disabled:pointer-events-none cursor-pointer",
                     variants[variant],
                     sizes[size],
                     className,
+                    (isLoading || disabled) && "opacity-50 pointer-events-none"
                 )}
-                disabled={isLoading}
+                {...(!asDiv && { disabled: isLoading || disabled })}
                 {...props}
             >
                 {isLoading && (
                     <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
                 )}
                 {children}
-            </motion.button>
+            </Component>
         );
     },
 );

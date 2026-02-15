@@ -7,7 +7,13 @@ import Navbar from "./Navbar";
 import Footer from "./Footer";
 import ScrollToTop from "../ui/ScrollToTop";
 
-export default function ConditionalLayout({ children }: { children: React.ReactNode }) {
+export default function ConditionalLayout({
+    children,
+    initialBranding
+}: {
+    children: React.ReactNode,
+    initialBranding?: { siteName: string, logoUrl: string }
+}) {
     const pathname = usePathname();
     const router = useRouter();
     const { data: session, status } = useSession();
@@ -32,7 +38,7 @@ export default function ConditionalLayout({ children }: { children: React.ReactN
 
     return (
         <div className="flex min-h-screen flex-col">
-            <Navbar />
+            <Navbar initialBranding={initialBranding} />
             <main className="flex-1 pt-20">{children}</main>
             <Footer />
             <ScrollToTop />

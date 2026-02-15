@@ -78,7 +78,7 @@ export default async function GameDetails({ params }: { params: Promise<{ slug: 
                                 <div className="relative w-full md:w-48 h-32 rounded-lg overflow-hidden shrink-0 mb-4 md:mb-0 md:mr-8 bg-black/50">
                                     <Image
                                         fill
-                                        src={tournament.image || game.coverImage || "/logo.png"}
+                                        src={tournament.image || game.coverImage || "/logo.svg"}
                                         alt={tournament.title}
                                         className="object-cover"
                                     />

@@ -6,8 +6,9 @@ import { toast } from "react-hot-toast";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Card from "@/components/ui/Card";
-import { FileText, ArrowLeft, Save, Globe } from "lucide-react";
+import { FileText, ArrowLeft, Save, Globe, X, Sparkles } from "lucide-react";
 import Link from "next/link";
+import NextImage from "next/image";
 import ImageUpload from "@/components/ui/ImageUpload";
 
 export default function EditArticlePage({ params }: { params: Promise<{ id: string }> }) {
@@ -20,11 +21,31 @@ export default function EditArticlePage({ params }: { params: Promise<{ id: stri
         excerpt: "",
         content: "",
         image: "",
-        author: "Nexus Editorial",
+        author: "Rioters Editorial",
         category: "General",
+        gallery: [] as string[],
     });
 
     const categories = ["Tournament", "Update", "Competition", "General"];
+
+    const refineContent = () => {
+        let content = formData.content;
+        content = content.replace(/^#\s+(.+)$/gm, '<span class="text-primary font-black uppercase tracking-tighter text-3xl md:text-5xl block my-8 md:my-12">$1</span>');
+        content = content.replace(/^##\s+(.+)$/gm, '<span class="text-primary/80 font-black uppercase tracking-tight text-xl md:text-3xl block my-6 md:my-8">$1</span>');
+        content = content.replace(/^###\s+(.+)$/gm, '<span class="text-white font-bold uppercase tracking-wide text-lg md:text-xl block my-4 md:my-6">$1</span>');
+        setFormData(prev => ({ ...prev, content }));
+        toast.success("AI refinement complete!");
+    };
+
+    const handleAddGalleryImage = (url: string) => {
+        if (url) {
+            setFormData(prev => ({ ...prev, gallery: [...prev.gallery, url] }));
+        }
+    };
+
+    const handleRemoveGalleryImage = (index: number) => {
+        setFormData(prev => ({ ...prev, gallery: prev.gallery.filter((_, i) => i !== index) }));
+    };
 
     useEffect(() => {
         const fetchArticle = async () => {
@@ -37,8 +58,9 @@ export default function EditArticlePage({ params }: { params: Promise<{ id: stri
                         excerpt: data.excerpt,
                         content: data.content,
                         image: data.image || "",
-                        author: data.author || "Nexus Editorial",
+                        author: data.author || "Rioters Editorial",
                         category: data.category || "General",
+                        gallery: data.gallery || [],
                     });
                 } else {
                     toast.error("Failed to fetch article data");
@@ -124,15 +146,33 @@ export default function EditArticlePage({ params }: { params: Promise<{ id: stri
                                 />
                             </div>
 
-                            <div className="space-y-2">
-                                <label className="text-sm font-bold uppercase text-white/60">Full Content</label>
+                            <div className="space-y-4">
+                                <div className="flex justify-between items-center">
+                                    <label className="text-sm font-bold uppercase text-white/60">Full Content</label>
+                                    <Button
+                                        type="button"
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={refineContent}
+                                        className="text-primary hover:text-white border border-primary/20 hover:border-primary transition-all px-2 h-7"
+                                    >
+                                        <Sparkles className="w-3 h-3 mr-1.5" /> Refine Style with AI
+                                    </Button>
+                                </div>
                                 <textarea
-                                    className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 focus:outline-none focus:border-primary text-white h-64 text-sm font-sans"
-                                    placeholder="Write the full story here..."
+                                    className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 focus:outline-none focus:border-primary text-white h-96 text-sm font-sans"
+                                    placeholder="Write the full story here... Use # for headers and [[IMG:0]] for gallery images."
                                     required
                                     value={formData.content}
                                     onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                                 />
+                                <div className="p-4 bg-primary/5 border border-primary/10 rounded-lg">
+                                    <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2">Editor Pro-Tips</p>
+                                    <ul className="text-[10px] text-white/30 space-y-1 list-disc pl-4 uppercase">
+                                        <li>Use <span className="text-primary"># Heading</span> then click "Refine" to auto-style.</li>
+                                        <li>Inject gallery images anywhere with <span className="text-primary">[[IMG:0]]</span>, <span className="text-primary">[[IMG:1]]</span>, etc.</li>
+                                    </ul>
+                                </div>
                             </div>
                         </form>
                     </Card>
@@ -166,6 +206,33 @@ export default function EditArticlePage({ params }: { params: Promise<{ id: stri
                                 />
                             </div>
 
+                            <div className="space-y-6 pt-4 border-t border-white/5">
+                                <label className="text-[10px] font-bold uppercase text-white/40 tracking-widest">Article Gallery</label>
+                                <div className="grid grid-cols-2 gap-3">
+                                    {formData.gallery.map((url, idx) => (
+                                        <div key={idx} className="relative aspect-square rounded-lg overflow-hidden border border-white/10 group bg-white/5">
+                                            <NextImage src={url} alt={`Gallery ${idx}`} fill className="object-cover opacity-60 group-hover:opacity-100 transition-opacity" />
+                                            <div className="absolute top-1 left-1 bg-black/60 px-1.5 py-0.5 rounded text-[8px] font-black uppercase text-primary border border-primary/20">
+                                                IMG:{idx}
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleRemoveGalleryImage(idx)}
+                                                className="absolute top-1 right-1 p-1 bg-red-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                            >
+                                                <X className="w-2 h-2 text-white" />
+                                            </button>
+                                        </div>
+                                    ))}
+                                    <div className="aspect-square">
+                                        <ImageUpload
+                                            value=""
+                                            onChange={handleAddGalleryImage}
+                                            aspectRatio={16 / 9}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
                             <div className="space-y-4">
                                 <ImageUpload
                                     label="Header Image"

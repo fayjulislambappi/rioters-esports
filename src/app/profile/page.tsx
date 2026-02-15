@@ -6,10 +6,12 @@ import Image from "next/image";
 import Link from "next/link";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
-import { User, Settings, Shield, Trophy, X, Camera, Lock, MapPin, Mail, LogOut } from "lucide-react";
+import { User, Settings, Shield, Trophy, X, Camera, Lock, MapPin, Mail, LogOut, Gamepad as GamepadIcon } from "lucide-react";
 import { signOut } from "next-auth/react";
 import toast from "react-hot-toast";
 import ImageUpload from "@/components/ui/ImageUpload";
+import { getOVRColor, getGenreByGame, GENRE_CONFIG } from "@/lib/ovr-utils";
+import { cn } from "@/lib/utils";
 
 export default function ProfilePage() {
     const { data: session, update } = useSession();
@@ -236,7 +238,7 @@ export default function ProfilePage() {
                 {/* Main Content */}
                 <div className="w-full md:w-2/3 space-y-8">
 
-                    {/* Stats */}
+                    {/* Stats Summary Cards */}
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
                         <Card className="p-6 text-center border-secondary/20">
                             <Trophy className="w-8 h-8 text-yellow-400 mx-auto mb-2" />
@@ -254,12 +256,68 @@ export default function ProfilePage() {
                             </div>
                             <div className="text-xs uppercase font-bold text-white/40">Team Role</div>
                         </Card>
-                        <Card className="p-6 text-center border-secondary/20">
-                            <User className="w-8 h-8 text-primary mx-auto mb-2" />
-                            <div className="text-2xl font-black">Active</div>
-                            <div className="text-xs uppercase font-bold text-white/40">Status</div>
+                        <Card className="p-6 text-center border-primary/20 bg-primary/5">
+                            <div className={cn(
+                                "text-4xl font-black italic tracking-tighter mb-1",
+                                user?.playerId ? getOVRColor(Math.max(...(user.playerId.games?.map((g: any) => g.overall) || [60]))) : "text-white/20"
+                            )}>
+                                {user?.playerId ? Math.max(...(user.playerId.games?.map((g: any) => g.overall) || [60])) : "--"}
+                            </div>
+                            <div className="text-xs uppercase font-bold text-white/40">Peak OVR Rating</div>
                         </Card>
                     </div>
+
+                    {/* Gaming Identity / Game Profiles */}
+                    {user?.playerId && (
+                        <div className="space-y-4">
+                            <h2 className="text-xl font-bold uppercase border-l-4 border-primary pl-4 flex items-center gap-2">
+                                <GamepadIcon className="w-5 h-5 text-primary" /> Multi-Game Identity
+                            </h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {user.playerId.games?.map((gameProfile: any, index: number) => (
+                                    <Card key={index} className="p-6 relative overflow-hidden group border-white/10 hover:border-primary/30 transition-all">
+                                        <div className="absolute top-0 right-0 p-4">
+                                            <div className={cn(
+                                                "text-3xl font-black italic",
+                                                getOVRColor(gameProfile.overall)
+                                            )}>
+                                                {gameProfile.overall}
+                                            </div>
+                                        </div>
+                                        <div className="space-y-4">
+                                            <div>
+                                                <h3 className="text-lg font-black uppercase text-white group-hover:text-primary transition-colors">{gameProfile.game}</h3>
+                                                <p className="text-xs font-bold text-white/40 uppercase tracking-widest">{gameProfile.role}</p>
+                                            </div>
+
+                                            <div className="grid grid-cols-3 gap-4 pt-2 border-t border-white/5">
+                                                {(() => {
+                                                    const genre = GENRE_CONFIG[getGenreByGame(gameProfile.game)] || GENRE_CONFIG["FPS"];
+                                                    const labels = genre.labels;
+                                                    return (
+                                                        <>
+                                                            <div className="text-center">
+                                                                <div className="text-sm font-bold text-white">{gameProfile.stats.dmg}</div>
+                                                                <div className="text-[10px] uppercase text-white/40 font-bold">{labels.dmg}</div>
+                                                            </div>
+                                                            <div className="text-center">
+                                                                <div className="text-sm font-bold text-white">{gameProfile.stats.hs}{getGenreByGame(gameProfile.game) === "FPS" ? "%" : ""}</div>
+                                                                <div className="text-[10px] uppercase text-white/40 font-bold">{labels.hs}</div>
+                                                            </div>
+                                                            <div className="text-center">
+                                                                <div className="text-sm font-bold text-white">{gameProfile.stats.ast}</div>
+                                                                <div className="text-[10px] uppercase text-white/40 font-bold">{labels.ast}</div>
+                                                            </div>
+                                                        </>
+                                                    );
+                                                })()}
+                                            </div>
+                                        </div>
+                                    </Card>
+                                ))}
+                            </div>
+                        </div>
+                    )}
 
                     {/* Recent Activity */}
                     <div className="space-y-4">

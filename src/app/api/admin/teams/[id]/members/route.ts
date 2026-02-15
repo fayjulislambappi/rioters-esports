@@ -59,6 +59,16 @@ export async function POST(
                 await Team.findByIdAndUpdate(id, { captainId: null });
             }
         } else {
+            // Check Roster Limits for NEW members
+            const { getGameRosterLimit } = require("@/lib/game-config");
+            const limits = getGameRosterLimit(team.gameFocus);
+            const currentTotal = (team.members || []).length;
+
+            if (currentTotal >= limits.maxTotal) {
+                return NextResponse.json({
+                    error: `This team is already full. Maximum players for ${team.gameFocus} is ${limits.maxTotal}.`
+                }, { status: 400 });
+            }
             // IF NEW TO TEAM: (Remove the game-focus restriction as per requested logic which allows multiple teams)
             /*
             const existingTeamForGame = user.teams.find((t: any) => t.game === team.gameFocus);

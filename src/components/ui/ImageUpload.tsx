@@ -11,9 +11,11 @@ interface ImageUploadProps {
     onChange: (url: string) => void;
     label?: string;
     aspectRatio?: number; // Added optional aspect ratio
+    outputFormat?: "image/jpeg" | "image/png";
+    cropShape?: "rect" | "round";
 }
 
-export default function ImageUpload({ value, onChange, label, aspectRatio = 1 }: ImageUploadProps) {
+export default function ImageUpload({ value, onChange, label, aspectRatio = 1, outputFormat = "image/jpeg", cropShape = "round" }: ImageUploadProps) {
     const [uploading, setUploading] = useState(false);
     const [imageToCrop, setImageToCrop] = useState<string | null>(null);
     const [crop, setCrop] = useState({ x: 0, y: 0 });
@@ -46,7 +48,7 @@ export default function ImageUpload({ value, onChange, label, aspectRatio = 1 }:
 
         try {
             setUploading(true);
-            const croppedImageBlob = await getCroppedImg(imageToCrop, croppedAreaPixels);
+            const croppedImageBlob = await getCroppedImg(imageToCrop, croppedAreaPixels, 0, { horizontal: false, vertical: false }, outputFormat);
 
             if (!croppedImageBlob) {
                 toast.error("Failed to crop image");
@@ -54,7 +56,8 @@ export default function ImageUpload({ value, onChange, label, aspectRatio = 1 }:
             }
 
             const formData = new FormData();
-            formData.append("file", croppedImageBlob, "cropped-image.jpg");
+            const extension = outputFormat === "image/png" ? "png" : "jpg";
+            formData.append("file", croppedImageBlob, `cropped-image.${extension}`);
 
             const res = await fetch("/api/admin/upload", {
                 method: "POST",
@@ -85,7 +88,7 @@ export default function ImageUpload({ value, onChange, label, aspectRatio = 1 }:
 
             <div className="relative group items-center justify-center border-2 border-dashed border-white/10 rounded-xl p-4 bg-white/5 hover:border-primary/50 transition-colors">
                 {value ? (
-                    <div className="relative w-full aspect-square max-w-[200px] mx-auto rounded-lg overflow-hidden border border-white/10 shadow-lg">
+                    <div className="relative w-full aspect-square max-w-[320px] mx-auto rounded-lg overflow-hidden border border-white/10 shadow-lg bg-black/40">
                         <Image src={value} alt="Preview" fill className="object-cover" />
                         <button
                             type="button"
@@ -138,7 +141,7 @@ export default function ImageUpload({ value, onChange, label, aspectRatio = 1 }:
                             onCropChange={setCrop}
                             onCropComplete={onCropComplete}
                             onZoomChange={setZoom}
-                            cropShape="round"
+                            cropShape={cropShape}
                             showGrid={false}
                         />
                     </div>

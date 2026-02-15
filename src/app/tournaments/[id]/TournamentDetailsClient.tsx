@@ -70,7 +70,7 @@ export default function TournamentDetailsClient({ tournament, userTeam, userId }
             {/* Hero Banner */}
             <div className="relative h-[400px] w-full">
                 <Image
-                    src={tournament.image || "/hero-bg.jpg"}
+                    src={tournament.image || "/logo.svg"}
                     alt={tournament.title}
                     fill
                     className="object-cover"

@@ -131,7 +131,7 @@ export default function CartSidebar() {
                                 </div>
                                 <div className="grid gap-3">
                                     <Link href="/checkout" onClick={toggleCart}>
-                                        <Button variant="neon" className="w-full py-4 text-lg">
+                                        <Button asDiv variant="neon" className="w-full py-4 text-lg">
                                             Checkout Now
                                         </Button>
                                     </Link>

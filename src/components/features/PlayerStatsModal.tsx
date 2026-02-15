@@ -1,9 +1,8 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Trophy, Target, Zap, Coins, Sword } from "lucide-react";
+import { X, Trophy, Sword, ChevronLeft } from "lucide-react";
 import Image from "next/image";
-import Button from "@/components/ui/Button";
 
 interface PlayerStatsModalProps {
     isOpen: boolean;
@@ -18,12 +17,23 @@ interface PlayerStatsModalProps {
         game: string;
     };
     stats?: {
-        kills: string;
-        kda: string;
-        goldPct: string;
-        dmgPct: string;
-        dpm: string;
+        kills?: number | string;
+        kda?: number | string;
+        goldPct?: number | string;
+        dmgPct?: number | string;
+        dpm?: number | string;
+
+        // New OVR Stats
+        dmg?: number | string;
+        scr?: number | string;
+        fks?: number | string;
+        hs?: number | string;
+        ast?: number | string;
+        clu?: number | string;
+
+        [key: string]: any;
     };
+    overall?: number;
 }
 
 const defaultStats = {
@@ -34,8 +44,31 @@ const defaultStats = {
     dpm: "859",
 };
 
-export default function PlayerStatsModal({ isOpen, onClose, player, stats = defaultStats }: PlayerStatsModalProps) {
-    return (
+import { createPortal } from "react-dom";
+import { useState, useEffect } from "react";
+import { getOVRColor, getGenreByGame, GENRE_CONFIG } from "@/lib/ovr-utils";
+
+export default function PlayerStatsModal({ isOpen, onClose, player, stats, overall }: PlayerStatsModalProps) {
+    const [mounted, setMounted] = useState(false);
+
+    // Merge defaults
+    const displayStats = { ...defaultStats, ...stats };
+
+    // Formatting helpers
+    const formatPct = (val: number | string) => typeof val === 'number' ? `${val}%` : val;
+    const formatNum = (val: number | string) => typeof val === 'number' ? val.toString() : val;
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    const genreKey = getGenreByGame(player.game);
+    const genre = GENRE_CONFIG[genreKey] || GENRE_CONFIG["FPS"];
+    const labels = genre.labels;
+
+    if (!mounted) return null;
+
+    return createPortal(
         <AnimatePresence>
             {isOpen && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8">
@@ -53,29 +86,39 @@ export default function PlayerStatsModal({ isOpen, onClose, player, stats = defa
                         initial={{ opacity: 0, scale: 0.9, y: 20 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                        className="relative w-full max-w-4xl bg-[#0A0A0A] overflow-hidden rounded-sm border border-white/10 shadow-2xl flex flex-col md:flex-row min-h-[500px]"
+                        className="relative w-full max-w-4xl bg-[#0A0A0A] overflow-y-auto overflow-x-hidden max-h-[90vh] md:max-h-[85vh] rounded-sm border border-white/10 shadow-2xl flex flex-col md:flex-row md:overflow-hidden overscroll-y-contain touch-pan-y no-scrollbar"
                     >
                         {/* Legendaries Framing Accents */}
-                        <div className="absolute inset-0 border-[8px] border-primary/10 pointer-events-none z-20" />
-                        <div className="absolute top-0 right-0 w-24 h-24 bg-primary/20 bg-gradient-to-bl from-primary to-transparent z-30 clip-path-legendary-corner" />
+                        <div className="absolute inset-0 border-[4px] md:border-[8px] border-primary/10 pointer-events-none z-20" />
+                        <div className="absolute top-0 right-0 w-24 h-24 bg-primary/20 bg-gradient-to-bl from-primary to-transparent z-30 clip-path-legendary-corner pointer-events-none" />
 
-                        {/* Close Button */}
-                        <button
-                            onClick={onClose}
-                            className="absolute top-4 right-4 z-[60] text-white/40 hover:text-white transition-colors p-2 hover:bg-white/5 rounded-full"
-                        >
-                            <X className="w-6 h-6" />
-                        </button>
+                        {/* Sticky Navigation Header (Mobile Only primarily, but useful on desktop too) */}
+                        <div className="sticky top-0 left-0 right-0 z-[60] flex justify-between items-start p-4 bg-gradient-to-b from-black/80 to-transparent pointer-events-none md:absolute md:w-full">
+                            <button
+                                onClick={onClose}
+                                className="pointer-events-auto text-white/60 hover:text-white transition-colors p-2 hover:bg-white/10 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center gap-1 pr-4"
+                            >
+                                <ChevronLeft className="w-5 h-5" />
+                                <span className="text-xs font-bold uppercase tracking-wider">Back</span>
+                            </button>
+
+                            <button
+                                onClick={onClose}
+                                className="pointer-events-auto text-white/40 hover:text-white transition-colors p-2 hover:bg-white/5 rounded-full bg-black/20 backdrop-blur-md border border-white/10"
+                            >
+                                <X className="w-6 h-6" />
+                            </button>
+                        </div>
 
                         {/* Left Section: Player Portrait & Name */}
-                        <div className="relative flex-1 bg-zinc-900/50 flex flex-row min-h-[400px] md:min-h-0">
+                        <div className="relative flex-1 bg-zinc-900/50 flex flex-col md:flex-row min-h-[50vh] md:min-h-0">
                             {/* Vertical Labels */}
-                            <div className="w-20 md:w-32 flex flex-col justify-end p-6 md:p-12 border-r border-white/5 relative z-10">
-                                <div className="rotate-[-90deg] origin-bottom-left whitespace-nowrap translate-y-[-10px]">
-                                    <span className="text-5xl md:text-8xl font-black uppercase tracking-tighter text-white block drop-shadow-2xl">
+                            <div className="w-full md:w-32 flex flex-col justify-end p-8 md:p-12 border-b md:border-b-0 md:border-r border-white/5 relative z-10">
+                                <div className="md:rotate-[-90deg] md:origin-bottom-left md:whitespace-nowrap md:translate-y-[-10px]">
+                                    <span className="text-4xl md:text-8xl font-black uppercase tracking-tighter text-white block drop-shadow-2xl">
                                         {player.ign}
                                     </span>
-                                    <span className="text-primary text-xs md:text-sm font-bold uppercase tracking-[0.4em] block mt-2">
+                                    <span className="text-primary text-[10px] md:text-sm font-bold uppercase tracking-[0.4em] block mt-2">
                                         {player.name}
                                     </span>
                                     <div className="flex flex-wrap gap-2 mt-4">
@@ -95,7 +138,8 @@ export default function PlayerStatsModal({ isOpen, onClose, player, stats = defa
                                         src={player.image}
                                         alt={player.ign}
                                         fill
-                                        className="object-cover object-top filter brightness-95 contrast-110"
+                                        sizes="(max-width: 768px) 100vw, 50vw"
+                                        className="object-cover object-center translate-x-[5%] md:translate-x-[15%] brightness-110"
                                     />
                                 ) : (
                                     <div className="w-full h-full flex items-center justify-center opacity-10">
@@ -105,7 +149,9 @@ export default function PlayerStatsModal({ isOpen, onClose, player, stats = defa
 
                                 {/* Floating Skill Score in Modal */}
                                 <div className="absolute top-8 left-0 z-40 bg-primary px-4 py-2">
-                                    <span className="text-4xl font-black italic text-white leading-none">104</span>
+                                    <span className={`text-4xl font-black italic ${overall ? getOVRColor(overall) : 'text-white'} leading-none`}>
+                                        {overall || "104"}
+                                    </span>
                                 </div>
 
                                 {/* Team Watermark Logo (Center/Background) */}
@@ -121,18 +167,18 @@ export default function PlayerStatsModal({ isOpen, onClose, player, stats = defa
                                 )}
 
                                 {/* Sponsorships at bottom of photo */}
-                                <div className="absolute bottom-6 left-8 right-8 flex items-center justify-between opacity-30 scale-90 origin-left">
-                                    <div className="flex gap-6 items-center grayscale">
-                                        <span className="text-xs font-black uppercase border border-white/20 px-3 py-1">KIA</span>
-                                        <span className="text-xs font-black uppercase border border-white/20 px-3 py-1">LOGITECH</span>
-                                        <span className="text-xs font-black uppercase border border-white/20 px-3 py-1">RED BULL</span>
+                                <div className="absolute bottom-6 left-8 right-8 flex items-center justify-between opacity-30 scale-75 md:scale-90 origin-left">
+                                    <div className="flex gap-4 md:gap-6 items-center grayscale">
+                                        <span className="text-[10px] md:text-xs font-black uppercase border border-white/20 px-2 md:px-3 py-1">KIA</span>
+                                        <span className="text-[10px] md:text-xs font-black uppercase border border-white/20 px-2 md:px-3 py-1">LOGITECH</span>
+                                        <span className="text-[10px] md:text-xs font-black uppercase border border-white/20 px-2 md:px-3 py-1">RED BULL</span>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
                         {/* Right Section: Statistics */}
-                        <div className="w-full md:w-[42%] bg-primary flex flex-col p-8 md:p-14 relative overflow-hidden">
+                        <div className="w-full md:w-[42%] bg-primary flex flex-col p-6 md:p-14 relative overflow-visible md:overflow-hidden">
                             {/* Large Vertical Team Name Background Wrapper */}
                             <div className="absolute top-0 right-0 h-full w-24 overflow-hidden pointer-events-none opacity-10">
                                 <span className="rotate-90 origin-top-left absolute top-0 left-0 whitespace-nowrap text-9xl font-black uppercase text-black">
@@ -143,37 +189,44 @@ export default function PlayerStatsModal({ isOpen, onClose, player, stats = defa
                             <div className="relative z-10 space-y-6 md:space-y-8">
                                 <div className="space-y-1">
                                     <div className="flex justify-between items-end border-b-2 border-black/10 pb-2">
-                                        <span className="text-black/60 font-black uppercase text-xs tracking-[0.2em]">Average Kills</span>
-                                        <span className="text-black text-5xl md:text-7xl font-black italic leading-none drop-shadow-sm">{stats.kills}</span>
+                                        <span className="text-black/60 font-black uppercase text-[10px] md:text-xs tracking-[0.2em]">{labels.dmg}</span>
+                                        <span className="text-black text-4xl md:text-7xl font-black italic leading-none drop-shadow-sm">{formatNum(displayStats.dmg || 0)}</span>
                                     </div>
                                 </div>
 
                                 <div className="space-y-1">
                                     <div className="flex justify-between items-end border-b-2 border-black/10 pb-2">
-                                        <span className="text-black/60 font-black uppercase text-xs tracking-[0.2em]">K/D/A Ratio</span>
-                                        <span className="text-black text-5xl md:text-7xl font-black italic leading-none drop-shadow-sm">{stats.kda}</span>
+                                        <span className="text-black/60 font-black uppercase text-[10px] md:text-xs tracking-[0.2em]">{labels.scr}</span>
+                                        <span className="text-black text-4xl md:text-7xl font-black italic leading-none drop-shadow-sm">{formatNum(displayStats.scr || 0)}</span>
                                     </div>
                                 </div>
 
                                 <div className="grid grid-cols-1 gap-6 md:gap-8">
                                     <div className="space-y-1">
                                         <div className="flex justify-between items-end border-b border-black/10 pb-2">
-                                            <span className="text-black/60 font-black uppercase text-[10px] tracking-widest">Gold Share</span>
-                                            <span className="text-black text-3xl md:text-4xl font-black italic leading-none">{stats.goldPct}</span>
+                                            <span className="text-black/60 font-black uppercase text-[10px] tracking-widest">{labels.fks}</span>
+                                            <span className="text-black text-3xl md:text-4xl font-black italic leading-none">{formatPct(displayStats.fks || 0)}</span>
                                         </div>
                                     </div>
 
                                     <div className="space-y-1">
                                         <div className="flex justify-between items-end border-b border-black/10 pb-2">
-                                            <span className="text-black/60 font-black uppercase text-[10px] tracking-widest">DMG Share</span>
-                                            <span className="text-black text-3xl md:text-4xl font-black italic leading-none">{stats.dmgPct}</span>
+                                            <span className="text-black/60 font-black uppercase text-[10px] tracking-widest">{labels.hs}</span>
+                                            <span className="text-black text-3xl md:text-4xl font-black italic leading-none">{formatPct(displayStats.hs || 0)}</span>
                                         </div>
                                     </div>
 
                                     <div className="space-y-1">
                                         <div className="flex justify-between items-end border-b border-black/10 pb-2">
-                                            <span className="text-black/60 font-black uppercase text-[10px] tracking-widest">DPM</span>
-                                            <span className="text-black text-3xl md:text-4xl font-black italic leading-none">{stats.dpm}</span>
+                                            <span className="text-black/60 font-black uppercase text-[10px] tracking-widest">{labels.ast}</span>
+                                            <span className="text-black text-3xl md:text-4xl font-black italic leading-none">{formatNum(displayStats.ast || 0)}</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-1">
+                                        <div className="flex justify-between items-end border-b border-black/10 pb-2">
+                                            <span className="text-black/60 font-black uppercase text-[10px] tracking-widest">{labels.clu}</span>
+                                            <span className="text-black text-3xl md:text-4xl font-black italic leading-none">{formatNum(displayStats.clu || 0)}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -198,6 +251,7 @@ export default function PlayerStatsModal({ isOpen, onClose, player, stats = defa
                     </motion.div>
                 </div>
             )}
-        </AnimatePresence>
+        </AnimatePresence>,
+        document.body
     );
 }

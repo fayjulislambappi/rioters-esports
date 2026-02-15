@@ -93,6 +93,15 @@ export default function CreateTeamPage() {
     }, [searchQuery, session?.user?.id, selectedMembers]);
 
     const handleAddMember = (user: any) => {
+        const { getGameRosterLimit } = require("@/lib/game-config");
+        const limits = getGameRosterLimit(formData.gameFocus);
+
+        // +1 because captain is already included in members on backend
+        if (selectedMembers.length + 1 >= limits.maxTotal) {
+            toast.error(`Roster is full for ${formData.gameFocus}. Max ${limits.maxTotal} players allowed.`);
+            return;
+        }
+
         setSelectedMembers([...selectedMembers, user]);
         setSearchResults([]);
         setSearchQuery("");
@@ -201,13 +210,29 @@ export default function CreateTeamPage() {
                                 className="flex h-10 w-full rounded-md border border-white/20 bg-black/20 px-3 py-2 text-sm text-foreground focus:border-primary/50 focus:outline-none"
                                 value={formData.gameFocus}
                                 required
-                                onChange={(e) => setFormData({ ...formData, gameFocus: e.target.value })}
+                                onChange={(e) => {
+                                    setFormData({ ...formData, gameFocus: e.target.value });
+                                    setSelectedMembers([]); // Reset members when game changes to ensure limits are fresh
+                                }}
                             >
                                 <option value="" disabled>Select a Game</option>
                                 {games.map(game => (
                                     <option key={game._id} value={game.title}>{game.title}</option>
                                 ))}
                             </select>
+
+                            {/* Limit Info Badge */}
+                            {formData.gameFocus && (() => {
+                                const { getGameRosterLimit } = require("@/lib/game-config");
+                                const limits = getGameRosterLimit(formData.gameFocus);
+                                return (
+                                    <div className="mt-2 flex gap-4 text-[10px] uppercase font-black tracking-widest text-primary/60">
+                                        <span>{limits.starters} Starters Required</span>
+                                        <span>Max {limits.maxSubstitutes} Substitutes</span>
+                                        <span>Max {limits.maxTotal} Total Players</span>
+                                    </div>
+                                );
+                            })()}
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

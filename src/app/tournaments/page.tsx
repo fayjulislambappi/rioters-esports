@@ -7,8 +7,11 @@ import { MoveRight, Calendar, Trophy, Users, Filter, Loader } from "lucide-react
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 
+import { motion, AnimatePresence } from "framer-motion"; // Added import
+
 export default function TournamentsPage() {
     const [filter, setFilter] = useState("ALL");
+    const [isFilterOpen, setIsFilterOpen] = useState(false); // Added state
     const [tournaments, setTournaments] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -43,20 +46,45 @@ export default function TournamentsPage() {
                     </p>
                 </div>
 
-                <div className="flex items-center space-x-2 mt-6 md:mt-0">
-                    <Filter className="w-4 h-4 text-white/60" />
-                    <span className="text-sm font-bold uppercase text-white/60 mr-2">Filter:</span>
-                    <div className="flex bg-white/5 rounded-lg p-1">
-                        {["ALL", "UPCOMING", "ONGOING", "COMPLETED"].map((status) => (
-                            <button
-                                key={status}
-                                onClick={() => setFilter(status)}
-                                className={`px-3 py-1 rounded-md text-xs font-bold uppercase transition-colors ${filter === status ? "bg-primary text-black shadow-glow" : "text-white/60 hover:text-white"}`}
-                            >
-                                {status}
-                            </button>
-                        ))}
+                <div className="relative mt-6 md:mt-0 z-20">
+                    <div className="flex items-center space-x-2">
+                        <span className="text-sm font-bold uppercase text-white/60 mr-2 md:hidden">Filter:</span>
+                        <button
+                            onClick={() => setIsFilterOpen(!isFilterOpen)}
+                            className="flex items-center gap-2 bg-white/5 border border-white/10 px-4 py-2 rounded-lg hover:bg-white/10 transition-colors"
+                        >
+                            <Filter className="w-4 h-4 text-primary" />
+                            <span className="text-sm font-bold uppercase">{filter}</span>
+                        </button>
                     </div>
+
+                    <AnimatePresence>
+                        {isFilterOpen && (
+                            <motion.div
+                                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                className="absolute right-0 top-full mt-2 min-w-[200px] bg-black/90 backdrop-blur-xl border border-white/10 rounded-xl p-2 shadow-2xl flex flex-col gap-1"
+                            >
+                                {["ALL", "UPCOMING", "ONGOING", "COMPLETED"].map((status) => (
+                                    <button
+                                        key={status}
+                                        onClick={() => {
+                                            setFilter(status);
+                                            setIsFilterOpen(false);
+                                        }}
+                                        className={`w-full text-left px-4 py-3 rounded-lg text-xs font-bold uppercase transition-colors flex items-center justify-between ${filter === status
+                                            ? "bg-primary text-black"
+                                            : "text-white/60 hover:bg-white/5 hover:text-white"
+                                            }`}
+                                    >
+                                        {status}
+                                        {filter === status && <div className="w-2 h-2 rounded-full bg-black" />}
+                                    </button>
+                                ))}
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </div>
             </div>
 
@@ -84,9 +112,10 @@ export default function TournamentsPage() {
                             <div className="relative w-full md:w-64 h-48 shrink-0">
                                 <Image
                                     fill
-                                    src={tournament.image || "/logo.png"}
+                                    src={tournament.image || "/logo.svg"}
                                     alt={tournament.title}
                                     className="object-cover"
+                                    sizes="(max-width: 768px) 100vw, 256px"
                                 />
                                 <div className="absolute top-2 left-2 px-2 py-1 bg-black/80 backdrop-blur-md rounded text-[10px] font-black uppercase text-primary border border-primary/20">
                                     {tournament.status}
@@ -119,7 +148,7 @@ export default function TournamentsPage() {
                                         Registration status: <span className="text-white font-bold">{tournament.status === "UPCOMING" ? "OPEN" : "CLOSED"}</span>
                                     </div>
                                     <Link href={`/tournaments/${tournament._id}`}>
-                                        <Button variant="neon" size="sm">
+                                        <Button asDiv variant="neon" size="sm">
                                             View Details <MoveRight className="ml-2 w-4 h-4" />
                                         </Button>
                                     </Link>

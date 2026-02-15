@@ -25,6 +25,7 @@ export interface IUser extends Document {
         zip?: string;
         country?: string;
     };
+    playerId?: mongoose.Types.ObjectId;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -62,6 +63,7 @@ const UserSchema = new Schema<IUser>(
             zip: { type: String },
             country: { type: String },
         },
+        playerId: { type: Schema.Types.ObjectId, ref: "Player" },
     },
     { timestamps: true },
 );

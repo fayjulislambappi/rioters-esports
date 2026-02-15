@@ -82,7 +82,7 @@ export default function AuthLayout({ children, title, subtitle, brandTag = "Acce
                 >
                     <Link href="/" className="inline-flex flex-col items-center group">
                         <div className="relative w-48 h-48 mb-1 transform group-hover:scale-110 transition-transform duration-500">
-                            <Image src={logoUrl} alt={siteName} fill className="object-contain drop-shadow-[0_0_15px_rgba(255,46,46,0.5)]" />
+                            <Image src="/logo.svg" alt="Rioters Esports" width={64} height={64} className="object-contain" />
                         </div>
                         <span className="text-3xl font-black uppercase tracking-[0.2em] text-white italic" style={{ fontFamily: 'var(--font-orbitron)' }}>
                             {renderSiteName()}

@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/db";
 import User from "@/models/User";
 import Team from "@/models/Team"; // Import Team model to populate if needed
+import mongoose from "mongoose";
 
 export async function GET(req: Request) {
     try {
@@ -17,6 +18,7 @@ export async function GET(req: Request) {
 
         let user = await User.findById(session.user.id)
             .populate("teams.teamId", "name slug logo")
+            .populate("playerId")
             .lean();
 
         if (!user) {
@@ -50,12 +52,81 @@ export async function GET(req: Request) {
                 session.user.id,
                 { $push: { teams: { $each: newTeamsToPush } } },
                 { new: true }
-            ).populate("teams.teamId", "name slug logo").lean();
+            ).populate("teams.teamId", "name slug logo").populate("playerId").lean();
 
             if (updatedUser) {
                 user = updatedUser;
             }
         }
+
+        // --- PLAYER SYNC LOGIC ---
+        const Player = (await import("@/models/Player")).default;
+
+        // 1. Check if user has a playerId but we need to fetch/link it
+        if (!user.playerId) {
+            // Try to find a player by userId or by name (IGN)
+            let linkedPlayer = await Player.findOne({ userId: session.user.id });
+
+            if (!linkedPlayer) {
+                // Fallback: search by name/IGN (case insensitive) if they registered with their game name
+                linkedPlayer = await Player.findOne({
+                    $or: [
+                        { ign: { $regex: new RegExp(`^${user.name}$`, "i") } },
+                        { name: { $regex: new RegExp(`^${user.name}$`, "i") } }
+                    ]
+                });
+
+                if (linkedPlayer && !linkedPlayer.userId) {
+                    // Auto-link if found by name and no userId assigned
+                    linkedPlayer.userId = new mongoose.Types.ObjectId(session.user.id);
+                    await linkedPlayer.save();
+                }
+            }
+
+            if (linkedPlayer) {
+                // Link User to Player
+                const updatedUser = await User.findByIdAndUpdate(
+                    session.user.id,
+                    { $set: { playerId: linkedPlayer._id } },
+                    { new: true }
+                ).populate("teams.teamId", "name slug logo").populate("playerId").lean();
+                if (updatedUser) user = updatedUser;
+            }
+        }
+
+        // 2. Sync Player.games.teamId with User.teams
+        if (user.playerId && (user.playerId as any).games) {
+            const playerDoc = await Player.findById(user.playerId);
+            if (playerDoc) {
+                let playerChanged = false;
+
+                // Map of game -> teamId from User.teams
+                const userGamesMap: Record<string, string> = {};
+                (user.teams || []).forEach((t: any) => {
+                    const teamId = t.teamId?._id?.toString() || t.teamId?.toString();
+                    if (teamId) userGamesMap[t.game] = teamId;
+                });
+
+                playerDoc.games.forEach((profile) => {
+                    const targetTeamId = userGamesMap[profile.game];
+                    if (targetTeamId && profile.team?.toString() !== targetTeamId) {
+                        profile.team = new mongoose.Types.ObjectId(targetTeamId) as any;
+                        playerChanged = true;
+                    }
+                });
+
+                if (playerChanged) {
+                    await playerDoc.save();
+                    // Refetch user to get updated player data if populated
+                    const updatedUser = await User.findById(session.user.id)
+                        .populate("teams.teamId", "name slug logo")
+                        .populate("playerId")
+                        .lean();
+                    if (updatedUser) user = updatedUser;
+                }
+            }
+        }
+        // --- END PLAYER SYNC ---
 
         // --- MULTI-ROLE MIGRATION & SYNC ---
         let rolesChanged = false;

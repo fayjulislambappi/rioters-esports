@@ -34,7 +34,7 @@ export default function NewsPage() {
             <div className="mb-12 text-center">
                 <span className="text-secondary text-sm font-bold uppercase tracking-widest mb-2 block">Latest Updates</span>
                 <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tighter">
-                    Nexus <span className="text-white text-outline">News</span>
+                    Rioters <span className="text-white text-outline">News</span>
                 </h1>
             </div>
 
@@ -53,32 +53,34 @@ export default function NewsPage() {
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {articles.map((article) => (
-                        <Card key={article._id} className="p-0 overflow-hidden flex flex-col h-full group">
-                            <div className="relative h-48 w-full overflow-hidden">
-                                <Image src={article.image || "/logo.png"} alt={article.title} fill className="object-cover group-hover:scale-110 transition-transform duration-500" />
-                                <div className="absolute top-4 left-4 bg-primary text-black text-[10px] font-black px-2 py-0.5 rounded uppercase">
-                                    {article.category}
-                                </div>
-                            </div>
-
-                            <div className="p-6 flex-1 flex flex-col">
-                                <div className="flex items-center text-xs text-white/40 mb-3 space-x-3">
-                                    <span className="flex items-center"><Calendar className="w-3 h-3 mr-1" /> {format(new Date(article.createdAt), "MMM dd, yyyy")}</span>
-                                    <span className="flex items-center"><User className="w-3 h-3 mr-1" /> {article.author}</span>
+                        <Link key={article._id} href={`/news/${article.slug}`}>
+                            <Card className="p-0 overflow-hidden flex flex-col h-full group cursor-pointer border-white/5 hover:border-primary/30 transition-all duration-300">
+                                <div className="relative h-48 w-full overflow-hidden">
+                                    <Image src={article.image || "/logo.svg"} alt={article.title} fill className="object-cover group-hover:scale-110 transition-transform duration-500" />
+                                    <div className="absolute top-4 left-4 bg-primary text-black text-[10px] font-black px-2 py-0.5 rounded uppercase">
+                                        {article.category}
+                                    </div>
                                 </div>
 
-                                <h2 className="text-xl font-bold uppercase mb-3 leading-tight group-hover:text-primary transition-colors line-clamp-2">
-                                    {article.title}
-                                </h2>
-                                <p className="text-white/60 text-sm mb-6 flex-1 line-clamp-3">
-                                    {article.excerpt}
-                                </p>
+                                <div className="p-6 flex-1 flex flex-col">
+                                    <div className="flex items-center text-xs text-white/40 mb-3 space-x-3">
+                                        <span className="flex items-center"><Calendar className="w-3 h-3 mr-1" /> {format(new Date(article.createdAt), "MMM dd, yyyy")}</span>
+                                        <span className="flex items-center"><User className="w-3 h-3 mr-1" /> {article.author}</span>
+                                    </div>
 
-                                <Button variant="outline" size="sm" className="w-full">
-                                    Read More
-                                </Button>
-                            </div>
-                        </Card>
+                                    <h2 className="text-xl font-bold uppercase mb-3 leading-tight group-hover:text-primary transition-colors line-clamp-2">
+                                        {article.title}
+                                    </h2>
+                                    <p className="text-white/60 text-sm mb-6 flex-1 line-clamp-3">
+                                        {article.excerpt}
+                                    </p>
+
+                                    <Button variant="outline" size="sm" className="w-full group-hover:bg-primary group-hover:text-black transition-colors">
+                                        Read More
+                                    </Button>
+                                </div>
+                            </Card>
+                        </Link>
                     ))}
                 </div>
             )}

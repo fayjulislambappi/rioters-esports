@@ -8,30 +8,26 @@ import { ChevronDown } from "lucide-react";
 import { useState, useEffect } from "react";
 import NextImage from "next/image";
 
-export default function Hero() {
+interface HeroProps {
+    galleryImages: string[];
+    galleryStyle: string;
+    galleryMode: string;
+    slicedImageUrl: string;
+}
+
+export default function Hero({ galleryImages = [], galleryStyle = "ARCH", galleryMode = "INDIVIDUAL", slicedImageUrl = "" }: HeroProps) {
     const { status } = useSession();
-    const [images, setImages] = useState<string[]>([]);
-    const [style, setStyle] = useState("ARCH");
-    const [mode, setMode] = useState("INDIVIDUAL");
-    const [masterImage, setMasterImage] = useState("");
+    const [images, setImages] = useState<string[]>(galleryImages);
+    const [style, setStyle] = useState(galleryStyle);
+    const [mode, setMode] = useState(galleryMode);
+    const [masterImage, setMasterImage] = useState(slicedImageUrl);
 
     useEffect(() => {
-        const fetchBranding = async () => {
-            try {
-                const res = await fetch("/api/admin/settings");
-                const data = await res.json();
-                if (res.ok) {
-                    if (data.galleryImages) setImages(data.galleryImages);
-                    if (data.galleryStyle) setStyle(data.galleryStyle);
-                    if (data.galleryMode) setMode(data.galleryMode);
-                    if (data.slicedImageUrl) setMasterImage(data.slicedImageUrl);
-                }
-            } catch (error) {
-                console.error("Failed to fetch gallery images:", error);
-            }
-        };
-        fetchBranding();
-    }, []);
+        if (galleryImages.length) setImages(galleryImages);
+        if (galleryStyle) setStyle(galleryStyle);
+        if (galleryMode) setMode(galleryMode);
+        if (slicedImageUrl) setMasterImage(slicedImageUrl);
+    }, [galleryImages, galleryStyle, galleryMode, slicedImageUrl]);
 
     const scrollToNext = () => {
         window.scrollTo({
@@ -62,15 +58,15 @@ export default function Hero() {
             {/* Arched/Diamond Gallery Background */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
 
-                <div className="flex justify-center items-center gap-[var(--hero-gap)] flex-nowrap pt-10">
+                <div className="flex justify-center items-center gap-[var(--hero-gap)] flex-nowrap pt-0 md:pt-10">
                     {Array.from({ length: 10 }).map((_, index) => {
                         const { y, scaleY } = getLayoutProps(index);
                         // Visibility logic: 
-                        // Mobile: Show 4 center items (3,4,5,6)
-                        // Tablet: Show 6 items (2,3,4,5,6,7)
+                        // Mobile: Show 3 center items (4,5,6) - Reduced from 4 to 3 for better fit
+                        // Tablet: Show 5 items (3,4,5,6,7)
                         // Desktop: Show all
-                        const isHiddenMobile = index < 3 || index > 6;
-                        const isHiddenTablet = index < 2 || index > 7;
+                        const isHiddenMobile = index < 4 || index > 6;
+                        const isHiddenTablet = index < 3 || index > 7;
 
                         return (
                             <motion.div
@@ -87,7 +83,7 @@ export default function Hero() {
                                     delay: index * 0.05,
                                     ease: [0.2, 0.65, 0.3, 0.9]
                                 }}
-                                className={`relative overflow-hidden border border-white/10 rounded-lg bg-white/5 shrink-0 ${isHiddenMobile ? 'hidden sm:block' : ''} ${isHiddenTablet ? 'sm:hidden lg:block' : ''}`}
+                                className={`relative overflow-hidden border border-white/10 rounded-lg bg-white/5 shrink-0 transition-all duration-500 ${isHiddenMobile ? 'hidden sm:block' : ''} ${isHiddenTablet ? 'sm:hidden lg:block' : ''}`}
                                 style={{
                                     width: 'var(--hero-slice-w)',
                                     height: 'var(--hero-slice-h)',
@@ -111,6 +107,7 @@ export default function Hero() {
                                         fill
                                         className="object-cover"
                                         priority={index > 3 && index < 7}
+                                        sizes="10vw"
                                     />
                                 )}
                                 <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-40" />
@@ -124,21 +121,21 @@ export default function Hero() {
             <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent pointer-events-none z-10" />
 
             {/* Content Container */}
-            <div className="container px-4 text-center z-20 mt-auto mb-32">
+            <div className="container px-4 text-center z-20 mt-auto mb-24 md:mb-32">
                 <motion.div
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.8 }}
                 >
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                        <Link href="/tournaments">
-                            <Button size="lg" variant="primary" className="w-full sm:w-auto px-12 py-7 text-xl tracking-[0.2em] uppercase font-black italic hover:scale-105 transition-transform shadow-[0_0_50px_rgba(255,46,46,0.3)]">
+                        <Link href="/tournaments" className="w-full sm:w-auto">
+                            <Button asDiv size="lg" variant="primary" className="w-full px-8 md:px-12 py-6 md:py-7 text-lg md:text-xl tracking-[0.2em] uppercase font-black italic hover:scale-105 transition-transform shadow-[0_0_50px_rgba(255,46,46,0.3)]">
                                 Enter Arena
                             </Button>
                         </Link>
                         {status !== "authenticated" && (
-                            <Link href="/register">
-                                <Button size="lg" variant="outline" className="w-full sm:w-auto px-12 py-7 text-xl tracking-[0.2em] uppercase font-black italic hover:scale-105 transition-transform">
+                            <Link href="/register" className="w-full sm:w-auto">
+                                <Button asDiv size="lg" variant="outline" className="w-full px-8 md:px-12 py-6 md:py-7 text-lg md:text-xl tracking-[0.2em] uppercase font-black italic hover:scale-105 transition-transform">
                                     Join Squad
                                 </Button>
                             </Link>

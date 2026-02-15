@@ -69,13 +69,20 @@ export async function PATCH(req: Request) {
                 }, { status: 400 });
             }
 
+            // Determine role – if team already has 5 members, set to SUBSTITUTE
+            let finalRole = role;
+            const currentMemberCount = team.members?.length || 0;
+            if (currentMemberCount >= 5 && role !== "CAPTAIN" && role !== "ADMIN") {
+                finalRole = "SUBSTITUTE";
+            }
+
             // Add member to the team
             await Team.findByIdAndUpdate(application.teamId, {
                 $addToSet: { members: application.userId }
             });
 
-            // If role is CAPTAIN, update team captainId
-            if (role === "CAPTAIN") {
+            // If finalRole is CAPTAIN, update team captainId
+            if (finalRole === "CAPTAIN") {
                 await Team.findByIdAndUpdate(application.teamId, {
                     captainId: application.userId
                 });
@@ -85,19 +92,19 @@ export async function PATCH(req: Request) {
             const userToUpdate = await User.findById(application.userId);
             if (userToUpdate) {
                 // Strict Role Check: If role is CAPTAIN or ADMIN, verify they aren't already that in another team
-                if (role === "CAPTAIN" || role === "ADMIN") {
-                    const isAlreadyThatRole = userToUpdate.teams?.some((t: any) => t.role === role);
+                if (finalRole === "CAPTAIN" || finalRole === "ADMIN") {
+                    const isAlreadyThatRole = userToUpdate.teams?.some((t: any) => t.role === finalRole);
                     if (isAlreadyThatRole) {
                         return NextResponse.json({
-                            error: `User is already a ${role === "CAPTAIN" ? "Captain" : "Admin"} of another team. Cannot approve with this role.`
+                            error: `User is already a ${finalRole === "CAPTAIN" ? "Captain" : "Admin"} of another team. Cannot approve with this role.`
                         }, { status: 400 });
                     }
                 }
 
                 // Define roles to add
                 const rolesToAdd: string[] = ["TEAM_MEMBER"];
-                if (role === "CAPTAIN") rolesToAdd.push("TEAM_CAPTAIN");
-                if (role === "ADMIN") rolesToAdd.push("TEAM_ADMIN");
+                if (finalRole === "CAPTAIN") rolesToAdd.push("TEAM_CAPTAIN");
+                if (finalRole === "ADMIN") rolesToAdd.push("TEAM_ADMIN");
 
                 // 1. Update roles: Remove USER, Add others
                 if (userToUpdate.roles && userToUpdate.roles.includes("USER")) {
@@ -114,7 +121,7 @@ export async function PATCH(req: Request) {
                 userToUpdate.teams.push({
                     teamId: application.teamId,
                     game: team.gameFocus as string,
-                    role: role as any
+                    role: finalRole as any
                 });
 
                 // 3. Update primary role

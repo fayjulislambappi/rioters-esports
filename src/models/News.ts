@@ -8,6 +8,7 @@ export interface INews extends Document {
     image: string;
     author: string;
     category: "Tournament" | "Update" | "Competition" | "General";
+    gallery: string[];
     published: boolean;
     createdAt: Date;
     updatedAt: Date;
@@ -20,12 +21,13 @@ const NewsSchema: Schema<INews> = new Schema(
         excerpt: { type: String, required: true },
         content: { type: String, required: true },
         image: { type: String, required: true },
-        author: { type: String, default: "Nexus Editorial" },
+        author: { type: String, default: "Rioters Editorial" },
         category: {
             type: String,
             enum: ["Tournament", "Update", "Competition", "General"],
             default: "General",
         },
+        gallery: { type: [String], default: [] },
         published: { type: Boolean, default: true },
     },
     { timestamps: true }

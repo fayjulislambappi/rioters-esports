@@ -31,7 +31,7 @@ export default function GamesPage() {
         <div className="container mx-auto px-4 py-12">
             <div className="mb-8">
                 <Link href="/">
-                    <Button variant="ghost" size="sm" className="mb-4 pl-0 hover:bg-transparent hover:text-primary">
+                    <Button asDiv variant="ghost" size="sm" className="mb-4 pl-0 hover:bg-transparent hover:text-primary">
                         <MoveLeft className="mr-2 h-4 w-4" /> Back to Home
                     </Button>
                 </Link>

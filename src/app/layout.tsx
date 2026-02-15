@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { Toaster } from "react-hot-toast";
 import connectDB from "@/lib/db";
 import Setting from "@/models/Setting";
+import Preloader from "@/components/ui/Preloader";
 
 export const dynamic = 'force-dynamic';
 
@@ -26,11 +27,20 @@ export async function generateMetadata(): Promise<Metadata> {
       return acc;
     }, {});
 
+    const iconUrl = settingsObj.faviconUrl || "/logo.png";
+
     return {
       title: settingsObj.siteName || "Rioters Esports | The Ultimate Competitive Gaming Platform",
       description: "Join the revolution of competitive gaming. Tournaments, teams, and community.",
       icons: {
-        icon: settingsObj.faviconUrl || "/favicon.ico",
+        icon: [
+          { url: iconUrl, sizes: "32x32", type: "image/png" },
+          { url: iconUrl, sizes: "192x192", type: "image/png" },
+          { url: iconUrl, sizes: "512x512", type: "image/png" },
+        ],
+        apple: [
+          { url: iconUrl, sizes: "180x180", type: "image/png" },
+        ],
       }
     };
   } catch (error) {
@@ -52,6 +62,19 @@ export default async function RootLayout({
 }>) {
   const session = await getServerSession(authOptions);
 
+  let logoUrl = "/logo.png";
+  let siteName = "RIOTERS ESPORTS";
+  try {
+    await connectDB();
+    const settings = await Setting.find({ key: { $in: ["logoUrl", "siteName"] } });
+    const siteSetting = settings.find(s => s.key === "siteName");
+    const logoSetting = settings.find(s => s.key === "logoUrl");
+    if (siteSetting) siteName = siteSetting.value;
+    if (logoSetting) logoUrl = logoSetting.value;
+  } catch (error) {
+    console.error("Failed to fetch branding for layout:", error);
+  }
+
   return (
     <html lang="en" className="dark">
       <body
@@ -62,7 +85,8 @@ export default async function RootLayout({
         )}
       >
         <Providers session={session}>
-          <ConditionalLayout>
+          <Preloader logoUrl={logoUrl} />
+          <ConditionalLayout initialBranding={{ siteName, logoUrl }}>
             {children}
           </ConditionalLayout>
           <Toaster

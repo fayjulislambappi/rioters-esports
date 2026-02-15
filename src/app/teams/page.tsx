@@ -46,8 +46,8 @@ export default function TeamsPage() {
                 </div>
 
                 <div className="w-full md:w-auto mt-6 md:mt-0 relative flex flex-col md:flex-row gap-4 items-center">
-                    <Link href="/teams/create">
-                        <Button variant="neon" size="sm">
+                    <Link href="/teams/create" className="w-full md:w-auto">
+                        <Button asDiv variant="neon" size="sm" className="w-full md:w-auto">
                             + Create Team
                         </Button>
                     </Link>
@@ -82,7 +82,7 @@ export default function TeamsPage() {
                             <div className="group bg-white/5 border border-white/5 rounded-xl p-6 hover:border-primary/50 transition-all duration-300 hover:-translate-y-1 h-full min-h-[200px] flex flex-col">
                                 <div className="flex items-center justify-between mb-6">
                                     <div className="relative w-16 h-16 rounded-lg overflow-hidden border border-white/10 group-hover:border-primary transition-colors bg-black/40">
-                                        <Image src={team.logo || "/logo.png"} alt={team.name} fill className="object-cover" />
+                                        <Image src={team.logo || "/logo.svg"} alt={team.name} fill className="object-cover" />
                                     </div>
                                     <div className="text-right">
                                         <span className="text-[10px] font-black text-white/40 uppercase block mb-1">Elite Squad</span>

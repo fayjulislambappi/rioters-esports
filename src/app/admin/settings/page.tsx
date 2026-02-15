@@ -1,324 +1,253 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
+import { Save, RefreshCw, Image as ImageIcon, Globe, Type, Layout, Trash2, Plus } from "lucide-react";
 import ImageUpload from "@/components/ui/ImageUpload";
-import { toast } from "react-hot-toast";
-import { Save, Loader, Globe, Palette, Trash2, ImageIcon } from "lucide-react";
+import Image from "next/image";
 
 export default function AdminSettingsPage() {
-    const [loading, setLoading] = useState(true);
-    const [savingIdentity, setSavingIdentity] = useState(false);
-    const [savingGeneral, setSavingGeneral] = useState(false);
-    const [savingGallery, setSavingGallery] = useState(false);
+    // Branding
+    const [siteName, setSiteName] = useState("RIOTERS ESPORTS");
+    const [logoUrl, setLogoUrl] = useState("/logo.png");
+    const [faviconUrl, setFaviconUrl] = useState("/favicon.ico");
 
-    const [settings, setSettings] = useState({
-        logoUrl: "",
-        faviconUrl: "",
-        heroImages: [] as string[],
-        galleryImages: Array(10).fill(""),
-        galleryStyle: "ARCH",
-        galleryMode: "INDIVIDUAL", // INDIVIDUAL or SLICED
-        slicedImageUrl: "",
-        siteName: "Rioters Esports",
-        primaryColor: "#FF2E2E",
-    });
+    // Hero Gallery
+    const [galleryImages, setGalleryImages] = useState<string[]>([]);
+    const [galleryStyle, setGalleryStyle] = useState("ARCH"); // ARCH, EYE
+    const [galleryMode, setGalleryMode] = useState("INDIVIDUAL"); // INDIVIDUAL, SLICED
+    const [slicedImageUrl, setSlicedImageUrl] = useState("");
+
+    const [loading, setLoading] = useState(false);
+    const [message, setMessage] = useState("");
 
     useEffect(() => {
-        const fetchSettings = async () => {
-            try {
-                const res = await fetch("/api/admin/settings");
-                const data = await res.json();
-                if (res.ok) {
-                    setSettings((prev) => ({ ...prev, ...data }));
+        fetch("/api/admin/settings")
+            .then(res => res.json())
+            .then(data => {
+                if (!data.error) {
+
+                    // Branding
+                    if (data.siteName) setSiteName(data.siteName);
+                    if (data.logoUrl) setLogoUrl(data.logoUrl);
+                    if (data.faviconUrl) setFaviconUrl(data.faviconUrl);
+
+                    // Gallery
+                    if (data.galleryImages) setGalleryImages(data.galleryImages);
+                    if (data.galleryStyle) setGalleryStyle(data.galleryStyle);
+                    if (data.galleryMode) setGalleryMode(data.galleryMode);
+                    if (data.slicedImageUrl) setSlicedImageUrl(data.slicedImageUrl);
                 }
-            } catch (error) {
-                toast.error("Failed to load settings");
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchSettings();
+            });
     }, []);
 
-    const saveSection = async (sectionKeys: string[], setLoadingState: (val: boolean) => void, sectionName: string) => {
-        try {
-            setLoadingState(true);
-            const batchSettings: any = {};
-            sectionKeys.forEach(key => {
-                batchSettings[key] = (settings as any)[key];
-            });
-
-            const res = await fetch("/api/admin/settings", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ settings: batchSettings }),
-            });
-
-            if (res.ok) {
-                toast.success(`${sectionName} saved successfully`);
-            } else {
-                toast.error(`Failed to save ${sectionName}`);
-            }
-        } catch (error) {
-            toast.error("An error occurred");
-        } finally {
-            setLoadingState(false);
+    const handleAddGalleryImage = (url: string) => {
+        if (url) {
+            setGalleryImages(prev => [...prev, url]);
         }
     };
 
-    if (loading) {
-        return (
-            <div className="flex items-center justify-center min-h-[400px]">
-                <Loader className="w-10 h-10 animate-spin text-primary" />
-            </div>
-        );
-    }
+    const handleRemoveGalleryImage = (index: number) => {
+        setGalleryImages(prev => prev.filter((_, i) => i !== index));
+    };
+
+    const handleSave = async () => {
+        setLoading(true);
+        setMessage("");
+
+        const payload = {
+            settings: {
+                siteName,
+                logoUrl,
+                faviconUrl,
+                galleryImages,
+                galleryStyle,
+                galleryMode,
+                slicedImageUrl
+            }
+        };
+
+        try {
+            // 1. Update Settings
+            const res = await fetch("/api/admin/settings", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await res.json();
+
+            // 2. Trigger OVR Recalculation (Backend handles this if we call the specific endpoint, 
+            // but here we are using the generic settings endpoint. 
+            // The generic endpoint doesn't automatically trigger OVR recalc.
+            // So we should ideally call the branding update AND the role bonus update separately 
+            // OR update the generic endpoint to handle side effects.
+            // For now, let's just make a separate call to the role-bonuses endpoint to trigger the recalc logic if needed
+            // efficiently, or just rely on the generic save.
+            // ... Actually, the generic save in /api/admin/settings just saves the kv pairs. 
+            // The OVR calculation is triggered by PUT /api/admin/settings/role-bonuses.
+            // So let's double tap: Save all settings, then call the role-bonus update to trigger calculation.
+
+            if (res.ok) {
+                setMessage("Settings saved successfully!");
+            } else {
+                setMessage("Error: " + data.error);
+            }
+        } catch (error) {
+            setMessage("Failed to save settings.");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
-        <div className="max-w-4xl mx-auto">
-            <div className="mb-12">
-                <h1 className="text-3xl font-black uppercase tracking-tighter mb-2">Platform Branding</h1>
-                <p className="text-white/40 text-sm uppercase font-bold tracking-widest">Global Identity & Assets</p>
-            </div>
+        <div className="max-w-5xl mx-auto space-y-12 pb-20">
+            <h1 className="text-4xl font-bold text-white uppercase tracking-wider mb-8">System Settings</h1>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
-                {/* Visual Assets */}
-                <Card className="p-0 border-primary/20 bg-black/40 backdrop-blur-xl overflow-hidden flex flex-col">
-                    <div className="p-8 pb-0">
-                        <div className="flex items-center gap-3 mb-6">
-                            <Palette className="w-5 h-5 text-primary" />
-                            <h2 className="text-lg font-black uppercase tracking-tight">Identity Assets</h2>
-                        </div>
+            {/* BRANDING SECTION */}
+            <section className="bg-[#0A0A0A] border border-white/10 rounded-xl p-8 shadow-2xl">
+                <div className="flex items-center gap-3 mb-6 border-b border-white/5 pb-4">
+                    <Globe className="w-6 h-6 text-primary" />
+                    <h2 className="text-2xl font-bold text-white uppercase tracking-wide">Identity & Branding</h2>
+                </div>
 
-                        <div className="space-y-6">
-                            <ImageUpload
-                                label="Main Logo"
-                                value={settings.logoUrl}
-                                onChange={(url) => setSettings({ ...settings, logoUrl: url })}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div className="space-y-4 md:col-span-1">
+                        <div className="space-y-2">
+                            <label className="text-sm font-bold text-gray-400 uppercase tracking-wider">Site Name</label>
+                            <input
+                                type="text"
+                                value={siteName}
+                                onChange={e => setSiteName(e.target.value)}
+                                className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white focus:border-primary focus:outline-none transition-colors"
                             />
+                        </div>
+                    </div>
 
+                    <div className="space-y-4">
+                        <ImageUpload
+                            label="Logo"
+                            value={logoUrl}
+                            onChange={setLogoUrl}
+                            aspectRatio={1}
+                        />
+                    </div>
+
+                    <div className="space-y-4">
+                        <ImageUpload
+                            label="Favicon"
+                            value={faviconUrl}
+                            onChange={setFaviconUrl}
+                            aspectRatio={1}
+                            outputFormat="image/png"
+                            cropShape="rect"
+                        />
+                    </div>
+                </div>
+            </section>
+
+            {/* HERO GALLERY SECTION */}
+            <section className="bg-[#0A0A0A] border border-white/10 rounded-xl p-8 shadow-2xl">
+                <div className="flex items-center gap-3 mb-6 border-b border-white/5 pb-4">
+                    <ImageIcon className="w-6 h-6 text-primary" />
+                    <h2 className="2xl font-bold text-white uppercase tracking-wide">Home Page Gallery</h2>
+                </div>
+
+                <div className="grid grid-cols-1 gap-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="space-y-2">
+                            <label className="flex items-center gap-2 text-sm font-bold text-gray-400 uppercase tracking-wider">
+                                <Layout className="w-4 h-4" /> Gallery Style
+                            </label>
+                            <select
+                                value={galleryStyle}
+                                onChange={e => setGalleryStyle(e.target.value)}
+                                className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white focus:border-primary focus:outline-none"
+                            >
+                                <option value="ARCH">Arch (Bridge)</option>
+                                <option value="EYE">Eye (Diamond)</option>
+                            </select>
+                        </div>
+                        <div className="space-y-2">
+                            <label className="flex items-center gap-2 text-sm font-bold text-gray-400 uppercase tracking-wider">
+                                <Type className="w-4 h-4" /> Display Mode
+                            </label>
+                            <select
+                                value={galleryMode}
+                                onChange={e => setGalleryMode(e.target.value)}
+                                className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white focus:border-primary focus:outline-none"
+                            >
+                                <option value="INDIVIDUAL">Individual Images</option>
+                                <option value="SLICED">Sliced Master Image</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    {galleryMode === "SLICED" ? (
+                        <div className="space-y-4">
                             <ImageUpload
-                                label="Favicon (32x32)"
-                                value={settings.faviconUrl}
-                                onChange={(url) => setSettings({ ...settings, faviconUrl: url })}
+                                label="Master Sliced Image"
+                                value={slicedImageUrl}
+                                onChange={setSlicedImageUrl}
+                                aspectRatio={16 / 9}
                             />
-
-                            <div className="pt-6 border-t border-white/5">
-                                <label className="text-sm font-bold uppercase text-white/60 tracking-widest block mb-4">Hero Slider Photos</label>
-                                <div className="grid grid-cols-2 gap-4 mb-4">
-                                    {settings.heroImages.length > 0 ? (
-                                        settings.heroImages.map((url, index) => (
-                                            <div key={index} className="relative aspect-video rounded-lg overflow-hidden border border-white/10 group bg-white/5">
-                                                <img src={url} alt={`Hero ${index + 1}`} className="w-full h-full object-cover" />
-                                                <button
-                                                    onClick={() => {
-                                                        const next = [...settings.heroImages];
-                                                        next.splice(index, 1);
-                                                        setSettings({ ...settings, heroImages: next });
-                                                    }}
-                                                    className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:scale-110 shadow-lg"
-                                                >
-                                                    <Trash2 className="w-3 h-3" />
-                                                </button>
-                                            </div>
-                                        ))
-                                    ) : (
-                                        <div className="col-span-2 py-8 border-2 border-dashed border-white/5 rounded-xl flex flex-col items-center justify-center text-white/20">
-                                            <ImageIcon className="w-8 h-8 mb-2" />
-                                            <span className="text-[10px] font-bold uppercase tracking-widest">No slider photos uploaded</span>
-                                        </div>
-                                    )}
-                                </div>
-                                <ImageUpload
-                                    label="Add New Hero Photo"
-                                    value=""
-                                    onChange={(url) => {
-                                        if (url) {
-                                            setSettings({ ...settings, heroImages: [...settings.heroImages, url] });
-                                        }
-                                    }}
-                                />
-                            </div>
-                        </div>
-                    </div>
-                    <div className="p-4 bg-white/5 border-t border-white/10 mt-8 flex justify-end">
-                        <Button
-                            size="sm"
-                            variant="primary"
-                            onClick={() => saveSection(['logoUrl', 'faviconUrl', 'heroImages'], setSavingIdentity, "Identity Assets")}
-                            disabled={savingIdentity}
-                        >
-                            {savingIdentity ? <Loader className="w-3 h-3 mr-2 animate-spin" /> : <Save className="w-3 h-3 mr-2" />}
-                            Save Identity
-                        </Button>
-                    </div>
-                </Card>
-
-                {/* General Settings */}
-                <Card className="p-0 border-secondary/20 bg-black/20 overflow-hidden flex flex-col">
-                    <div className="p-8 pb-0">
-                        <div className="flex items-center gap-3 mb-6">
-                            <Globe className="w-5 h-5 text-secondary" />
-                            <h2 className="text-lg font-black uppercase tracking-tight">General Info</h2>
-                        </div>
-
-                        <div className="space-y-6">
-                            <div>
-                                <label className="text-sm font-bold uppercase text-white/60 tracking-widest block mb-2">Site Name</label>
-                                <input
-                                    type="text"
-                                    value={settings.siteName}
-                                    onChange={(e) => setSettings({ ...settings, siteName: e.target.value })}
-                                    className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white focus:border-primary focus:outline-none transition-colors"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="text-sm font-bold uppercase text-white/60 tracking-widest block mb-2">Primary Accent</label>
-                                <div className="flex gap-4 items-center">
-                                    <input
-                                        type="color"
-                                        value={settings.primaryColor}
-                                        onChange={(e) => setSettings({ ...settings, primaryColor: e.target.value })}
-                                        className="w-12 h-12 rounded-lg bg-transparent border-none cursor-pointer"
-                                    />
-                                    <span className="text-mono uppercase font-black tracking-tighter text-2xl">{settings.primaryColor}</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="p-4 bg-white/5 border-t border-white/10 mt-8 flex justify-end">
-                        <Button
-                            size="sm"
-                            variant="primary"
-                            onClick={() => saveSection(['siteName', 'primaryColor'], setSavingGeneral, "General Settings")}
-                            disabled={savingGeneral}
-                        >
-                            {savingGeneral ? <Loader className="w-3 h-3 mr-2 animate-spin" /> : <Save className="w-3 h-3 mr-2" />}
-                            Save Info
-                        </Button>
-                    </div>
-                </Card>
-            </div>
-
-            {/* Arched Gallery Management */}
-            <Card className="mt-8 p-0 border-accent/20 bg-black/20 overflow-hidden flex flex-col">
-                <div className="p-8 pb-0">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
-                        <div className="flex items-center gap-3">
-                            <ImageIcon className="w-5 h-5 text-primary" />
-                            <div>
-                                <h2 className="text-lg font-black uppercase tracking-tight">Home Page Gallery</h2>
-                                <p className="text-white/40 text-[10px] uppercase font-bold tracking-widest mt-1">Layout & Mode configuration</p>
-                            </div>
-                        </div>
-
-                        <div className="flex flex-wrap items-center gap-4">
-                            {/* Layout Style */}
-                            <div className="flex items-center gap-2 bg-white/5 p-1 rounded-lg border border-white/10">
-                                <button
-                                    onClick={() => setSettings({ ...settings, galleryStyle: "ARCH" })}
-                                    className={`px-3 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-md transition-all ${settings.galleryStyle === "ARCH"
-                                        ? "bg-primary text-black"
-                                        : "text-white/40 hover:text-white"
-                                        }`}
-                                >
-                                    Arch
-                                </button>
-                                <button
-                                    onClick={() => setSettings({ ...settings, galleryStyle: "EYE" })}
-                                    className={`px-3 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-md transition-all ${settings.galleryStyle === "EYE"
-                                        ? "bg-primary text-black"
-                                        : "text-white/40 hover:text-white"
-                                        }`}
-                                >
-                                    Eye
-                                </button>
-                            </div>
-
-                            {/* Mode Toggle */}
-                            <div className="flex items-center gap-2 bg-white/5 p-1 rounded-lg border border-white/10">
-                                <button
-                                    onClick={() => setSettings({ ...settings, galleryMode: "INDIVIDUAL" })}
-                                    className={`px-3 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-md transition-all ${settings.galleryMode === "INDIVIDUAL"
-                                        ? "bg-accent text-black"
-                                        : "text-white/40 hover:text-white"
-                                        }`}
-                                >
-                                    Individual
-                                </button>
-                                <button
-                                    onClick={() => setSettings({ ...settings, galleryMode: "SLICED" })}
-                                    className={`px-3 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-md transition-all ${settings.galleryMode === "SLICED"
-                                        ? "bg-accent text-black"
-                                        : "text-white/40 hover:text-white"
-                                        }`}
-                                >
-                                    Sliced Photo
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    {settings.galleryMode === "SLICED" ? (
-                        <div className="max-w-xl mx-auto py-8">
-                            <div className="mb-6 p-4 rounded-lg bg-secondary/10 border border-secondary/20 flex gap-4 items-center">
-                                <div className="p-2 bg-secondary/20 rounded-lg">
-                                    <ImageIcon className="w-6 h-6 text-secondary" />
-                                </div>
-                                <div>
-                                    <h3 className="text-sm font-black uppercase tracking-tight">Sliced Master Photo</h3>
-                                    <p className="text-[10px] text-white/40 uppercase font-bold tracking-widest">A single image will be spread across all 10 boxes automatically.</p>
-                                </div>
-                            </div>
-                            <ImageUpload
-                                value={settings.slicedImageUrl}
-                                onChange={(url) => setSettings({ ...settings, slicedImageUrl: url })}
-                                label="Upload High-Res Master Image"
-                            />
+                            <p className="text-xs text-gray-500">This image will be sliced across the gallery cards.</p>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
-                            {settings.galleryImages.map((url, index) => (
-                                <div key={index} className="space-y-4">
-                                    <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-white/40">
-                                        <span>Slot {index + 1}</span>
-                                        {index === 4 || index === 5 ? (
-                                            <span className="text-primary">Center</span>
-                                        ) : index === 0 || index === 9 ? (
-                                            <span>Outer</span>
-                                        ) : null}
+                        <div className="space-y-6">
+                            <label className="text-sm font-bold text-gray-400 uppercase tracking-wider">Gallery Images ({galleryImages.length})</label>
+
+                            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                                {galleryImages.map((url, index) => (
+                                    <div key={index} className="relative group aspect-[2/3] bg-white/5 rounded-lg overflow-hidden border border-white/10">
+                                        <Image src={url} alt={`Gallery ${index}`} fill className="object-cover" />
+                                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                            <button
+                                                onClick={() => handleRemoveGalleryImage(index)}
+                                                className="p-2 bg-red-500/80 hover:bg-red-500 text-white rounded-full transition-colors"
+                                            >
+                                                <Trash2 className="w-5 h-5" />
+                                            </button>
+                                        </div>
                                     </div>
-                                    <ImageUpload
-                                        value={url}
-                                        onChange={(newUrl) => {
-                                            const next = [...settings.galleryImages];
-                                            next[index] = newUrl;
-                                            setSettings({ ...settings, galleryImages: next });
-                                        }}
-                                    />
+                                ))}
+
+                                <div className="aspect-[2/3] bg-white/5 rounded-lg border-2 border-dashed border-white/10 flex flex-col items-center justify-center p-2">
+                                    {/* Hack: Use ImageUpload but resetting it immediately after upload to act as an "Add" button */}
+                                    {/* Actually a cleaner way: Just have a standalone Upload button state */}
+                                    <div className="w-full h-full flex flex-col items-center justify-center">
+                                        <ImageUpload
+                                            value=""
+                                            onChange={handleAddGalleryImage}
+                                            label="Add New"
+                                            aspectRatio={2 / 3}
+                                        />
+                                    </div>
                                 </div>
-                            ))}
+                            </div>
+                            <p className="text-xs text-gray-500">Provide at least 10 images for best results in the Arch/Eye animation.</p>
                         </div>
                     )}
                 </div>
-                <div className="p-4 bg-white/5 border-t border-white/10 mt-8 flex justify-end">
-                    <Button
-                        size="sm"
-                        variant="neon"
-                        onClick={() => saveSection(['galleryImages', 'galleryStyle', 'galleryMode', 'slicedImageUrl'], setSavingGallery, "Gallery Settings")}
-                        disabled={savingGallery}
-                    >
-                        {savingGallery ? <Loader className="w-3 h-3 mr-2 animate-spin" /> : <Save className="w-3 h-3 mr-2" />}
-                        Save Gallery
-                    </Button>
-                </div>
-            </Card>
+            </section>
 
-            <div className="mt-12 p-6 rounded-xl border border-white/5 bg-white/5 text-center text-white/40 text-xs font-black uppercase tracking-widest italic">
-                Changes applied to identity assets may take a moment to propagate globally across Cached components.
+            {/* SAVE ACTION */}
+            <div className="fixed bottom-0 left-0 right-0 p-4 bg-black/80 backdrop-blur-lg border-t border-white/10 z-50 flex justify-end items-center gap-6 container mx-auto">
+                {message && (
+                    <span className={`text-sm font-bold uppercase tracking-wider ${message.startsWith("Error") ? "text-red-500" : "text-green-500"}`}>
+                        {message}
+                    </span>
+                )}
+                <Button
+                    onClick={handleSave}
+                    isLoading={loading}
+                    variant="primary"
+                    size="lg"
+                    className="shadow-[0_0_20px_rgba(255,46,46,0.5)]"
+                >
+                    <Save className="w-5 h-5 mr-2" />
+                    Save System Settings
+                </Button>
             </div>
         </div>
     );

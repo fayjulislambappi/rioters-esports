@@ -9,10 +9,12 @@ import Link from "next/link";
 import { MoveLeft, Trophy, Users, Globe, Twitter, Share2, Loader } from "lucide-react";
 import PlayerCard from "@/components/features/PlayerCard";
 import RosterCard3D from "@/components/features/RosterCard3D";
-import Carousel3D from "@/components/features/Carousel3D";
+import EpicRoster from "@/components/features/EpicRoster";
+import VerticalRoster from "@/components/features/VerticalRoster";
 import { toast } from "react-hot-toast";
 import { useSession } from "next-auth/react";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
+import { getGameRosterLimit } from "@/lib/game-config";
 
 export default function TeamProfile() {
     const params = useParams();
@@ -24,6 +26,7 @@ export default function TeamProfile() {
 
     const [submitting, setSubmitting] = useState(false);
     const [updatingRoster, setUpdatingRoster] = useState(false);
+    const [rosterView, setRosterView] = useState<"carousel" | "vertical">("vertical");
 
     const [editRoster, setEditRoster] = useState<{
         lineup: { ign: string; discord: string; userId?: string }[];
@@ -33,14 +36,8 @@ export default function TeamProfile() {
     const isCaptain =
         session?.user?.role === "ADMIN" ||
         (session?.user?.id && (
-            // 1. Check direct captainId field
             team?.captainId?._id?.toString() === session.user.id ||
-            team?.captainId?.toString() === session.user.id ||
-            // 2. Check if user is in members list with CAPTAIN role for THIS specific team
-            team?.members?.some((m: any) =>
-                (m._id?.toString() === session.user.id || m === session.user.id) &&
-                m.teams?.some((t: any) => t.teamId?.toString() === team?._id?.toString() && t.role === "CAPTAIN")
-            )
+            team?.captainId?.toString() === session.user.id
         ));
 
     // Valorant Questionnaire State
@@ -196,6 +193,7 @@ export default function TeamProfile() {
                     src={team.banner || "https://images.unsplash.com/photo-1542751110-97427bbecf20?q=80&w=1500&auto=format&fit=crop"}
                     alt={team.name}
                     fill
+                    sizes="100vw"
                     className="object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent" />
@@ -204,7 +202,13 @@ export default function TeamProfile() {
             <div className="container mx-auto px-4 -mt-20 relative z-10">
                 <div className="flex flex-col md:flex-row items-end mb-8">
                     <div className="w-32 h-32 md:w-40 md:h-40 relative rounded-xl overflow-hidden border-4 border-background bg-black shadow-2xl shrink-0">
-                        <Image src={team.logo || "/logo.png"} alt={team.name} fill className="object-cover" />
+                        <Image
+                            src={team.logo || "/logo.svg"}
+                            alt={team.name}
+                            fill
+                            sizes="(max-width: 768px) 128px, 160px"
+                            className="object-cover"
+                        />
                     </div>
 
                     <div className="flex-1 md:ml-8 mt-4 md:mt-0">
@@ -240,18 +244,27 @@ export default function TeamProfile() {
                                 </Button>
                             </Link>
                         )}
-                        {!team.members?.some((m: any) => m._id === session?.user?.id) && team.captainId?._id !== session?.user?.id && (
+                        {!team.members?.some((m: any) => (m._id || m) === session?.user?.id) && team.captainId?._id !== session?.user?.id && team.captainId !== session?.user?.id && (
                             <>
                                 {team.hasApplied ? (
                                     <div className="flex items-center gap-2 px-4 py-2 rounded-md bg-yellow-500/10 text-yellow-500 border border-yellow-500/30 font-black uppercase text-[10px] tracking-widest shadow-[0_0_15px_rgba(234,179,8,0.2)]">
                                         <div className="w-2 h-2 rounded-full bg-yellow-500 animate-pulse" />
                                         Application Pending
                                     </div>
-                                ) : (
-                                    <Button variant="primary" size="sm" onClick={() => setShowApplyModal(true)}>
-                                        Apply to Join
-                                    </Button>
-                                )}
+                                ) : (() => {
+                                    const limits = getGameRosterLimit(team.gameFocus);
+                                    const isFull = (team.members || []).length >= limits.maxTotal;
+
+                                    return isFull ? (
+                                        <div className="flex items-center gap-2 px-4 py-2 rounded-md bg-white/5 text-white/40 border border-white/10 font-black uppercase text-[10px] tracking-widest">
+                                            Team Full
+                                        </div>
+                                    ) : (
+                                        <Button variant="primary" size="sm" onClick={() => setShowApplyModal(true)}>
+                                            Apply to Join
+                                        </Button>
+                                    );
+                                })()}
                             </>
                         )}
                         {isCaptain && (
@@ -263,62 +276,109 @@ export default function TeamProfile() {
                 </div>
 
                 <div className="border-t border-white/10 pt-12">
-                    <h2 className="text-2xl font-bold uppercase mb-8 flex items-center">
-                        <Users className="w-6 h-6 mr-3 text-primary" /> Active Roster
-                    </h2>
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+                        <h2 className="text-2xl font-bold uppercase flex items-center">
+                            <Users className="w-6 h-6 mr-3 text-primary" /> Active Roster
+                        </h2>
+
+                        {/* View Toggle */}
+                        <div className="flex bg-white/5 p-1 rounded-lg border border-white/10 self-start md:self-auto relative z-30">
+                            <button
+                                onClick={() => setRosterView("carousel")}
+                                className={`px-4 py-1.5 rounded-md text-[10px] font-black uppercase tracking-widest transition-all ${rosterView === "carousel" ? "bg-primary text-white shadow-[0_0_15px_rgba(var(--primary-rgb),0.5)]" : "text-white/40 hover:text-white"
+                                    }`}
+                            >
+                                Roster Card
+                            </button>
+                            <button
+                                onClick={() => setRosterView("vertical")}
+                                className={`px-4 py-1.5 rounded-md text-[10px] font-black uppercase tracking-widest transition-all ${rosterView === "vertical" ? "bg-primary text-white shadow-[0_0_15px_rgba(var(--primary-rgb),0.5)]" : "text-white/40 hover:text-white"
+                                    }`}
+                            >
+                                Vertical View
+                            </button>
+                        </div>
+                    </div>
 
                     {team.members?.length > 0 ? (
-                        <div className="relative pt-6 pb-40 overflow-hidden md:overflow-visible">
-                            {/* Perspective Container */}
-                            <div className="flex justify-center items-center perspective-[2000px] h-[500px] cursor-grab active:cursor-grabbing">
-                                <div
-                                    className="relative w-full h-[500px] overflow-hidden rounded-3xl group"
-                                    onWheel={(e) => {
-                                        // Scroll to rotate logic
-                                    }}
-                                >
-                                    {(() => {
-                                        const registeredIds = new Set(team.members?.map((m: any) => m._id?.toString()));
-                                        const seenIgns = new Set(team.members?.map((m: any) => m.name?.toLowerCase()));
+                        <div className="relative pt-6 pb-10 overflow-hidden md:overflow-visible">
+                            {(() => {
+                                const registeredMap = new Map();
+                                (team.members || []).forEach((m: any) => {
+                                    if (m._id) registeredMap.set(m._id.toString(), m);
+                                    if (m.name) registeredMap.set(m.name.toLowerCase(), m);
+                                    if (m.ign) registeredMap.set(m.ign.toLowerCase(), m);
+                                });
 
-                                        const fullRoster = [...(team.members || [])];
+                                const fullRoster: any[] = [];
+                                const seenIds = new Set<string>();
 
-                                        // Deduplicate and merge lineup/subs
-                                        const addUnique = (players: any[], type: string) => {
-                                            (players || []).forEach((p: any, idx: number) => {
-                                                if (!p.ign) return;
+                                // 1. Process Lineup (Starting 5) - Strictly follow the lineup order
+                                (team.lineup || []).forEach((p: any, idx: number) => {
+                                    const registered = (p.userId && registeredMap.get(p.userId.toString())) || registeredMap.get(p.ign?.toLowerCase());
 
-                                                const idStr = p.userId?.toString();
-                                                const isRegistered = idStr && registeredIds.has(idStr);
-                                                const isInByIgn = seenIgns.has(p.ign.toLowerCase());
+                                    // Merge: Lineup data (ign, discord) + Registered Member data (image, stats, overall)
+                                    const member = {
+                                        ...p,
+                                        ...(registered || {}),
+                                        _id: p._id || registered?._id || `lineup-${idx}-${p.ign?.replace(/\s+/g, '-').toLowerCase()}`,
+                                        name: registered?.name || p.ign,
+                                        ign: p.ign || registered?.ign,
+                                        isLineup: true,
+                                        role: "PLAYER"
+                                    };
 
-                                                if (!isRegistered && !isInByIgn) {
-                                                    fullRoster.push({
-                                                        ...p,
-                                                        _id: `${type}-${idx}-${p.ign.replace(/\s+/g, '-').toLowerCase()}`,
-                                                        name: p.ign,
-                                                        isManual: true,
-                                                        role: type === "lineup" ? "PLAYER" : "SUBSTITUTE"
-                                                    });
-                                                    seenIgns.add(p.ign.toLowerCase());
-                                                }
-                                            });
-                                        };
+                                    fullRoster.push(member);
+                                    if (registered?._id) seenIds.add(registered._id.toString());
+                                });
 
-                                        addUnique(team.lineup, "lineup");
-                                        addUnique(team.substitutes, "sub");
+                                // 2. Process Substitutes
+                                (team.substitutes || []).forEach((p: any, idx: number) => {
+                                    const registered = (p.userId && registeredMap.get(p.userId.toString())) || registeredMap.get(p.ign?.toLowerCase());
 
-                                        return <Carousel3D teamMembers={fullRoster} teamInfo={team} />;
-                                    })()}
-                                </div>
+                                    if (registered?._id && seenIds.has(registered._id.toString())) return;
 
-                                {/* Carousel Navigation Hints (Visual only) */}
-                                <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 flex items-center gap-8 opacity-20 pointer-events-none">
-                                    <div className="h-[1px] w-20 bg-gradient-to-r from-transparent to-white" />
-                                    <span className="text-[10px] font-black uppercase tracking-[0.8em]">Scroll Roster</span>
-                                    <div className="h-[1px] w-20 bg-gradient-to-l from-transparent to-white" />
-                                </div>
-                            </div>
+                                    const member = {
+                                        ...p,
+                                        ...(registered || {}),
+                                        _id: p._id || registered?._id || `sub-${idx}-${p.ign?.replace(/\s+/g, '-').toLowerCase()}`,
+                                        name: registered?.name || p.ign,
+                                        ign: p.ign || registered?.ign,
+                                        isSubstitute: true,
+                                        role: "SUBSTITUTE"
+                                    };
+
+                                    fullRoster.push(member);
+                                    if (registered?._id) seenIds.add(registered._id.toString());
+                                });
+
+                                // 3. Finally add any registered members who aren't in lineup/subs (e.g. general members)
+                                (team.members || []).forEach((m: any) => {
+                                    if (m._id && !seenIds.has(m._id.toString())) {
+                                        fullRoster.push(m);
+                                    }
+                                });
+
+                                if (rosterView === "carousel") {
+                                    return (
+                                        // Perspective Container
+                                        <div className="flex justify-center items-start perspective-[2000px] md:h-[600px] h-[450px] cursor-grab active:cursor-grabbing md:-mt-24 -mt-12">
+                                            <div className="relative w-full h-full group">
+                                                <EpicRoster teamMembers={fullRoster} teamInfo={team} />
+                                            </div>
+
+                                            {/* Carousel Navigation Hints (Visual only) */}
+                                            <div className="absolute -bottom-16 left-1/2 -translate-x-1/2 flex items-center justify-center gap-4 md:gap-8 opacity-20 pointer-events-none w-full px-4">
+                                                <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent to-white" />
+                                                <span className="text-[10px] font-black uppercase tracking-[0.8em] text-center whitespace-nowrap">Scroll Roster</span>
+                                                <div className="h-[1px] flex-1 bg-gradient-to-l from-transparent to-white" />
+                                            </div>
+                                        </div>
+                                    );
+                                } else {
+                                    return <VerticalRoster teamMembers={fullRoster} teamInfo={team} />;
+                                }
+                            })()}
                         </div>
                     ) : (
                         <div className="bg-white/5 border border-white/10 rounded-xl p-12 text-center text-white/20 italic font-bold">
@@ -332,20 +392,20 @@ export default function TeamProfile() {
                             <h3 className="text-xl font-bold uppercase mb-6 flex items-center text-white/60">
                                 <Users className="w-5 h-5 mr-3" /> Starting Lineup
                             </h3>
-                            <div className="flex flex-wrap gap-4">
+                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
                                 {team.lineup.map((player: any, i: number) => (
-                                    <div key={i} className="bg-primary/5 border border-primary/20 rounded-lg px-6 py-4 flex items-center min-w-[240px]">
-                                        <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center mr-4 text-primary font-bold shrink-0">
+                                    <div key={i} className="bg-primary/5 border border-primary/20 rounded-lg px-3 py-3 md:px-6 md:py-4 flex items-center">
+                                        <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-primary/20 flex items-center justify-center mr-3 md:mr-4 text-primary font-bold shrink-0 text-xs md:text-base">
                                             {i + 2}
                                         </div>
-                                        <div>
-                                            <span className="block font-bold uppercase text-lg text-primary">{player.ign}</span>
-                                            <span className="text-[10px] text-white/40 uppercase tracking-widest block">Main Roster</span>
-                                            <span className="text-xs text-white/60 flex items-center mt-1">
-                                                <span className="w-3 h-3 mr-1 inline-block fill-current text-[#5865F2]">
+                                        <div className="min-w-0 flex-1">
+                                            <span className="block font-bold uppercase text-sm md:text-lg text-primary truncate">{player.ign}</span>
+                                            <span className="text-[8px] md:text-[10px] text-white/40 uppercase tracking-widest block truncate">Main Roster</span>
+                                            <span className="text-[10px] md:text-xs text-white/60 flex items-center mt-1 truncate">
+                                                <span className="w-2.5 h-2.5 md:w-3 md:h-3 mr-1 inline-block fill-current text-[#5865F2] shrink-0">
                                                     <svg viewBox="0 0 127.14 96.36" className="w-full h-full"><path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.11,77.11,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1A105.25,105.25,0,0,0,126.6,80.22c.12-9.23-1.69-19-4.89-27.42C118.52,43.27,113.88,24.78,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5-12.74,11.44-12.74S96.23,46,96.12,53,91.08,65.69,84.69,65.69Z" /></svg>
                                                 </span>
-                                                {player.discord}
+                                                <span className="truncate">{player.discord}</span>
                                             </span>
                                         </div>
                                     </div>
@@ -360,20 +420,20 @@ export default function TeamProfile() {
                             <h3 className="text-xl font-bold uppercase mb-6 flex items-center text-white/60">
                                 <Users className="w-5 h-5 mr-3" /> Substitutes / Reserves
                             </h3>
-                            <div className="flex flex-wrap gap-4">
+                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
                                 {team.substitutes.map((sub: any, i: number) => (
-                                    <div key={i} className="bg-white/5 border border-white/10 rounded-lg px-6 py-4 flex items-center min-w-[200px]">
-                                        <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center mr-4 shrink-0">
-                                            <Users className="w-5 h-5 text-white/40" />
+                                    <div key={i} className="bg-white/5 border border-white/10 rounded-lg px-3 py-3 md:px-6 md:py-4 flex items-center">
+                                        <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-white/10 flex items-center justify-center mr-3 md:mr-4 shrink-0">
+                                            <Users className="w-4 h-4 md:w-5 md:h-5 text-white/40" />
                                         </div>
-                                        <div>
-                                            <span className="block font-bold uppercase text-sm">{sub.ign}</span>
-                                            <span className="text-[10px] text-white/40 uppercase tracking-widest block">Reserve</span>
-                                            <span className="text-xs text-white/60 flex items-center mt-1">
-                                                <span className="w-3 h-3 mr-1 inline-block fill-current text-[#5865F2]">
+                                        <div className="min-w-0 flex-1">
+                                            <span className="block font-bold uppercase text-xs md:text-sm truncate">{sub.ign}</span>
+                                            <span className="text-[8px] md:text-[10px] text-white/40 uppercase tracking-widest block truncate">Reserve</span>
+                                            <span className="text-[10px] md:text-xs text-white/60 flex items-center mt-1 truncate">
+                                                <span className="w-2.5 h-2.5 md:w-3 md:h-3 mr-1 inline-block fill-current text-[#5865F2] shrink-0">
                                                     <svg viewBox="0 0 127.14 96.36" className="w-full h-full"><path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.11,77.11,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1A105.25,105.25,0,0,0,126.6,80.22c.12-9.23-1.69-19-4.89-27.42C118.52,43.27,113.88,24.78,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5-12.74,11.44-12.74S96.23,46,96.12,53,91.08,65.69,84.69,65.69Z" /></svg>
                                                 </span>
-                                                {sub.discord}
+                                                <span className="truncate">{sub.discord}</span>
                                             </span>
                                         </div>
                                     </div>
@@ -397,7 +457,7 @@ export default function TeamProfile() {
 
 
                             {/* Dynamic Game Questionnaires */}
-                            {team.gameFocus?.toLowerCase() === "valorant" && (
+                            {team.gameFocus?.toLowerCase().includes("valorant") && (
                                 <div className="space-y-4 border-t border-white/10 pt-4">
                                     <h3 className="text-xs font-black uppercase text-primary mb-2 tracking-widest">Valorant Stats</h3>
                                     <div className="grid grid-cols-2 gap-4">
@@ -432,13 +492,13 @@ export default function TeamProfile() {
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
                                             <label className="block text-[10px] font-bold uppercase text-white/40 mb-1">Main Role</label>
-                                            <select className="w-full bg-white/5 border border-white/10 rounded px-3 py-2 text-sm focus:outline-none focus:border-primary"
+                                            <select className="w-full bg-white/5 border border-white/10 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-primary"
                                                 value={questionnaireData.role || "Duelist"} onChange={(e) => setQuestionnaireData({ ...questionnaireData, role: e.target.value })}>
-                                                <option value="Duelist">Duelist</option>
-                                                <option value="Initiator">Initiator</option>
-                                                <option value="Controller">Controller</option>
-                                                <option value="Sentinel">Sentinel</option>
-                                                <option value="Flex">Flex</option>
+                                                <option className="bg-zinc-900 text-white" value="Duelist">Duelist</option>
+                                                <option className="bg-zinc-900 text-white" value="Initiator">Initiator</option>
+                                                <option className="bg-zinc-900 text-white" value="Controller">Controller</option>
+                                                <option className="bg-zinc-900 text-white" value="Sentinel">Sentinel</option>
+                                                <option className="bg-zinc-900 text-white" value="Flex">Flex</option>
                                             </select>
                                         </div>
                                         <div>
@@ -462,7 +522,7 @@ export default function TeamProfile() {
                                 </div>
                             )}
 
-                            {(team.gameFocus?.toLowerCase() === "cs2" || team.gameFocus?.toLowerCase() === "counter-strike 2") && (
+                            {(team.gameFocus?.toLowerCase().includes("cs2") || team.gameFocus?.toLowerCase().includes("counter-strike")) && (
                                 <div className="space-y-4 border-t border-white/10 pt-4">
                                     <h3 className="text-xs font-black uppercase text-primary mb-2 tracking-widest">CS2 Stats</h3>
                                     <div className="mb-4">
@@ -478,7 +538,7 @@ export default function TeamProfile() {
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
                                             <label className="block text-[10px] font-bold uppercase text-white/40 mb-1">Faceit Level</label>
-                                            <select className="w-full bg-white/5 border border-white/10 rounded px-3 py-2 text-sm focus:outline-none focus:border-primary"
+                                            <select className="w-full bg-white/5 border border-white/10 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-primary"
                                                 value={questionnaireData.faceitLevel || "10"} onChange={(e) => setQuestionnaireData({ ...questionnaireData, faceitLevel: e.target.value })}>
                                                 {[...Array(10)].map((_, i) => <option key={i} value={i + 1}>{i + 1}</option>)}
                                             </select>
@@ -492,14 +552,14 @@ export default function TeamProfile() {
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
                                             <label className="block text-[10px] font-bold uppercase text-white/40 mb-1">Main Role</label>
-                                            <select className="w-full bg-white/5 border border-white/10 rounded px-3 py-2 text-sm focus:outline-none focus:border-primary"
+                                            <select className="w-full bg-white/5 border border-white/10 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-primary"
                                                 value={questionnaireData.role || "Rifler"} onChange={(e) => setQuestionnaireData({ ...questionnaireData, role: e.target.value })}>
-                                                <option value="Rifler">Rifler</option>
-                                                <option value="AWPer">AWPer</option>
-                                                <option value="IGL">IGL</option>
-                                                <option value="Entry">Entry Fragger</option>
-                                                <option value="Support">Support</option>
-                                                <option value="Lurker">Lurker</option>
+                                                <option className="bg-zinc-900 text-white" value="Rifler">Rifler</option>
+                                                <option className="bg-zinc-900 text-white" value="AWPer">AWPer</option>
+                                                <option className="bg-zinc-900 text-white" value="IGL">IGL</option>
+                                                <option className="bg-zinc-900 text-white" value="Entry">Entry Fragger</option>
+                                                <option className="bg-zinc-900 text-white" value="Support">Support</option>
+                                                <option className="bg-zinc-900 text-white" value="Lurker">Lurker</option>
                                             </select>
                                         </div>
                                         <div>
@@ -511,7 +571,7 @@ export default function TeamProfile() {
                                 </div>
                             )}
 
-                            {team.gameFocus?.toLowerCase() === "league of legends" && (
+                            {team.gameFocus?.toLowerCase().includes("league of legends") && (
                                 <div className="space-y-4 border-t border-white/10 pt-4">
                                     <h3 className="text-xs font-black uppercase text-primary mb-2 tracking-widest">LoL Stats</h3>
                                     <div className="grid grid-cols-2 gap-4">
@@ -534,22 +594,22 @@ export default function TeamProfile() {
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
                                             <label className="block text-[10px] font-bold uppercase text-white/40 mb-1">Solo/Duo Rank</label>
-                                            <select className="w-full bg-white/5 border border-white/10 rounded px-3 py-2 text-sm focus:outline-none focus:border-primary"
+                                            <select className="w-full bg-white/5 border border-white/10 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-primary"
                                                 value={questionnaireData.rank || "Emerald"} onChange={(e) => setQuestionnaireData({ ...questionnaireData, rank: e.target.value })}>
                                                 {["Iron", "Bronze", "Silver", "Gold", "Platinum", "Emerald", "Diamond", "Master", "Grandmaster", "Challenger"].map(r => (
-                                                    <option key={r} value={r}>{r}</option>
+                                                    <option className="bg-zinc-900 text-white" key={r} value={r}>{r}</option>
                                                 ))}
                                             </select>
                                         </div>
                                         <div>
                                             <label className="block text-[10px] font-bold uppercase text-white/40 mb-1">Primary Role</label>
-                                            <select className="w-full bg-white/5 border border-white/10 rounded px-3 py-2 text-sm focus:outline-none focus:border-primary"
+                                            <select className="w-full bg-white/5 border border-white/10 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-primary"
                                                 value={questionnaireData.role || "Mid"} onChange={(e) => setQuestionnaireData({ ...questionnaireData, role: e.target.value })}>
-                                                <option value="Top">Top Lane</option>
-                                                <option value="Jungle">Jungle</option>
-                                                <option value="Mid">Mid Lane</option>
-                                                <option value="Bot">Bot Lane (ADC)</option>
-                                                <option value="Support">Support</option>
+                                                <option className="bg-zinc-900 text-white" value="Top">Top Lane</option>
+                                                <option className="bg-zinc-900 text-white" value="Jungle">Jungle</option>
+                                                <option className="bg-zinc-900 text-white" value="Mid">Mid Lane</option>
+                                                <option className="bg-zinc-900 text-white" value="Bot">Bot Lane (ADC)</option>
+                                                <option className="bg-zinc-900 text-white" value="Support">Support</option>
                                             </select>
                                         </div>
                                     </div>
@@ -561,7 +621,7 @@ export default function TeamProfile() {
                                 </div>
                             )}
 
-                            {team.gameFocus?.toLowerCase() === "dota 2" && (
+                            {team.gameFocus?.toLowerCase().includes("dota") && (
                                 <div className="space-y-4 border-t border-white/10 pt-4">
                                     <h3 className="text-xs font-black uppercase text-primary mb-2 tracking-widest">Dota 2 Stats</h3>
                                     <div className="mb-4">
@@ -582,13 +642,13 @@ export default function TeamProfile() {
                                         </div>
                                         <div>
                                             <label className="block text-[10px] font-bold uppercase text-white/40 mb-1">Primary Role</label>
-                                            <select className="w-full bg-white/5 border border-white/10 rounded px-3 py-2 text-sm focus:outline-none focus:border-primary"
+                                            <select className="w-full bg-white/5 border border-white/10 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-primary"
                                                 value={questionnaireData.role || "Pos 1"} onChange={(e) => setQuestionnaireData({ ...questionnaireData, role: e.target.value })}>
-                                                <option value="Pos 1">Carry (Pos 1)</option>
-                                                <option value="Pos 2">Mid (Pos 2)</option>
-                                                <option value="Pos 3">Offlane (Pos 3)</option>
-                                                <option value="Pos 4">Soft Support (Pos 4)</option>
-                                                <option value="Pos 5">Hard Support (Pos 5)</option>
+                                                <option className="bg-zinc-900 text-white" value="Pos 1">Carry (Pos 1)</option>
+                                                <option className="bg-zinc-900 text-white" value="Pos 2">Mid (Pos 2)</option>
+                                                <option className="bg-zinc-900 text-white" value="Pos 3">Offlane (Pos 3)</option>
+                                                <option className="bg-zinc-900 text-white" value="Pos 4">Soft Support (Pos 4)</option>
+                                                <option className="bg-zinc-900 text-white" value="Pos 5">Hard Support (Pos 5)</option>
                                             </select>
                                         </div>
                                     </div>
@@ -600,7 +660,7 @@ export default function TeamProfile() {
                                 </div>
                             )}
 
-                            {team.gameFocus?.toLowerCase() === "overwatch 2" && (
+                            {team.gameFocus?.toLowerCase().includes("overwatch") && (
                                 <div className="space-y-4 border-t border-white/10 pt-4">
                                     <h3 className="text-xs font-black uppercase text-primary mb-2 tracking-widest">OW2 Stats</h3>
                                     <div className="grid grid-cols-2 gap-4">
@@ -623,20 +683,20 @@ export default function TeamProfile() {
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
                                             <label className="block text-[10px] font-bold uppercase text-white/40 mb-1">Current Rank</label>
-                                            <select className="w-full bg-white/5 border border-white/10 rounded px-3 py-2 text-sm focus:outline-none focus:border-primary"
+                                            <select className="w-full bg-white/5 border border-white/10 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-primary"
                                                 value={questionnaireData.rank || "Diamond"} onChange={(e) => setQuestionnaireData({ ...questionnaireData, rank: e.target.value })}>
                                                 {["Bronze", "Silver", "Gold", "Platinum", "Diamond", "Master", "Grandmaster", "Champion"].map(r => (
-                                                    <option key={r} value={r}>{r}</option>
+                                                    <option className="bg-zinc-900 text-white" key={r} value={r}>{r}</option>
                                                 ))}
                                             </select>
                                         </div>
                                         <div>
                                             <label className="block text-[10px] font-bold uppercase text-white/40 mb-1">Main Role</label>
-                                            <select className="w-full bg-white/5 border border-white/10 rounded px-3 py-2 text-sm focus:outline-none focus:border-primary"
+                                            <select className="w-full bg-white/5 border border-white/10 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-primary"
                                                 value={questionnaireData.role || "Damage"} onChange={(e) => setQuestionnaireData({ ...questionnaireData, role: e.target.value })}>
-                                                <option value="Tank">Tank</option>
-                                                <option value="Damage">Damage (DPS)</option>
-                                                <option value="Support">Support</option>
+                                                <option className="bg-zinc-900 text-white" value="Tank">Tank</option>
+                                                <option className="bg-zinc-900 text-white" value="Damage">Damage (DPS)</option>
+                                                <option className="bg-zinc-900 text-white" value="Support">Support</option>
                                             </select>
                                         </div>
                                     </div>
@@ -644,6 +704,70 @@ export default function TeamProfile() {
                                         <label className="block text-[10px] font-bold uppercase text-white/40 mb-1">Top 3 Heroes</label>
                                         <input type="text" required placeholder="e.g. Tracer, Genji, Cassidy" className="w-full bg-white/5 border border-white/10 rounded px-3 py-2 text-sm focus:outline-none focus:border-primary"
                                             value={questionnaireData.heroes || ""} onChange={(e) => setQuestionnaireData({ ...questionnaireData, heroes: e.target.value })} />
+                                    </div>
+                                </div>
+                            )}
+
+                            {(team.gameFocus?.toLowerCase().includes("efootball") || team.gameFocus?.toLowerCase().includes("fc26") || team.gameFocus?.toLowerCase().includes("fifa")) && (
+                                <div className="space-y-4 border-t border-white/10 pt-4">
+                                    <h3 className="text-xs font-black uppercase text-primary mb-2 tracking-widest">{team.gameFocus} Stats</h3>
+                                    <div className="mb-4">
+                                        <label className="block text-[10px] font-bold uppercase text-white/40 mb-1">In-Game Name</label>
+                                        <input type="text" required placeholder="e.g. ProGamer123" className="w-full bg-white/5 border border-white/10 rounded px-3 py-2 text-sm focus:outline-none focus:border-primary"
+                                            value={questionnaireData.ign || ""} onChange={(e) => setQuestionnaireData({ ...questionnaireData, ign: e.target.value })} />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-[10px] font-bold uppercase text-white/40 mb-1">Present Rank</label>
+                                            {team.gameFocus?.toLowerCase().includes("efootball") ? (
+                                                <select className="w-full bg-white/5 border border-white/10 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-primary"
+                                                    value={questionnaireData.rank || "Division 10"} onChange={(e) => setQuestionnaireData({ ...questionnaireData, rank: e.target.value })}>
+                                                    {[...Array(10)].map((_, i) => (
+                                                        <option className="bg-zinc-900 text-white" key={i} value={`Division ${i + 1}`}>Division {i + 1}</option>
+                                                    ))}
+                                                </select>
+                                            ) : (
+                                                <input type="text" required placeholder="e.g. Division 1" className="w-full bg-white/5 border border-white/10 rounded px-3 py-2 text-sm focus:outline-none focus:border-primary"
+                                                    value={questionnaireData.rank || ""} onChange={(e) => setQuestionnaireData({ ...questionnaireData, rank: e.target.value })} />
+                                            )}
+                                        </div>
+                                        <div>
+                                            <label className="block text-[10px] font-bold uppercase text-white/40 mb-1">Peak Rank</label>
+                                            {team.gameFocus?.toLowerCase().includes("efootball") ? (
+                                                <select className="w-full bg-white/5 border border-white/10 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-primary"
+                                                    value={questionnaireData.peakRank || "Division 10"} onChange={(e) => setQuestionnaireData({ ...questionnaireData, peakRank: e.target.value })}>
+                                                    {[...Array(10)].map((_, i) => (
+                                                        <option className="bg-zinc-900 text-white" key={i} value={`Division ${i + 1}`}>Division {i + 1}</option>
+                                                    ))}
+                                                </select>
+                                            ) : (
+                                                <input type="text" required placeholder="e.g. Elite 1" className="w-full bg-white/5 border border-white/10 rounded px-3 py-2 text-sm focus:outline-none focus:border-primary"
+                                                    value={questionnaireData.peakRank || ""} onChange={(e) => setQuestionnaireData({ ...questionnaireData, peakRank: e.target.value })} />
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* General Fallback Questionnaire (if no game matches) */}
+                            {!["valorant", "cs2", "counter-strike", "league of legends", "dota", "overwatch", "efootball", "fc26", "fifa"].some(g => team.gameFocus?.toLowerCase().includes(g)) && (
+                                <div className="space-y-4 border-t border-white/10 pt-4">
+                                    <h3 className="text-xs font-black uppercase text-primary mb-2 tracking-widest">General Stats</h3>
+                                    <div className="mb-4">
+                                        <label className="block text-[10px] font-bold uppercase text-white/40 mb-1">In-Game Name</label>
+                                        <input type="text" required placeholder="e.g. PlayerOne" className="w-full bg-white/5 border border-white/10 rounded px-3 py-2 text-sm focus:outline-none focus:border-primary"
+                                            value={questionnaireData.ign || ""} onChange={(e) => setQuestionnaireData({ ...questionnaireData, ign: e.target.value })} />
+                                    </div>
+                                    <div className="mb-4">
+                                        <label className="block text-[10px] font-bold uppercase text-white/40 mb-1">Primary Role / Rank</label>
+                                        <input type="text" required placeholder="e.g. Support / Diamond" className="w-full bg-white/5 border border-white/10 rounded px-3 py-2 text-sm focus:outline-none focus:border-primary"
+                                            value={questionnaireData.rank || ""} onChange={(e) => setQuestionnaireData({ ...questionnaireData, rank: e.target.value })} />
+                                    </div>
+                                    <div className="mb-4">
+                                        <label className="block text-[10px] font-bold uppercase text-white/40 mb-1">Additional Info</label>
+                                        <textarea className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white focus:outline-none focus:border-primary transition-colors min-h-[80px] text-xs"
+                                            placeholder="Tell us why you want to join..."
+                                            value={questionnaireData.info || ""} onChange={(e) => setQuestionnaireData({ ...questionnaireData, info: e.target.value })} />
                                     </div>
                                 </div>
                             )}

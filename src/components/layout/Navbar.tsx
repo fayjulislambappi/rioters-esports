@@ -19,15 +19,18 @@ const navItems = [
     { name: "Shop", href: "/shop" },
 ];
 
-export default function Navbar() {
+export default function Navbar({ initialBranding }: { initialBranding?: { siteName: string, logoUrl: string } }) {
     const pathname = usePathname();
     const [isOpen, setIsOpen] = useState(false);
     const { data: session } = useSession();
     const { toggleCart, cartCount } = useCart();
-    const [logoUrl, setLogoUrl] = useState("/logo.png");
-    const [siteName, setSiteName] = useState("RIOTERS ESPORTS");
+    const [logoUrl, setLogoUrl] = useState(initialBranding?.logoUrl || "/logo.png");
+    const [siteName, setSiteName] = useState(initialBranding?.siteName || "RIOTERS ESPORTS");
 
     useEffect(() => {
+        // Only fetch if initial branding wasn't provided (fallback)
+        if (initialBranding) return;
+
         const fetchBranding = async () => {
             try {
                 const res = await fetch("/api/admin/settings");
@@ -62,15 +65,15 @@ export default function Navbar() {
                     {/* Logo */}
                     <Link href="/" className="flex items-center space-x-2 group shrink-0">
                         <div className="relative w-12 h-12 mr-2">
-                            <Image src={logoUrl} alt={siteName} fill className="object-contain" />
+                            <Image src={logoUrl || "/logo.svg"} alt={siteName} fill className="object-contain" sizes="48px" />
                         </div>
-                        <span className="text-2xl font-black uppercase tracking-widest text-white italic" style={{ fontFamily: 'var(--font-orbitron)' }}>
+                        <span className="text-lg md:text-2xl font-black uppercase tracking-widest text-white italic" style={{ fontFamily: 'var(--font-orbitron)' }}>
                             {renderSiteName()}
                         </span>
                     </Link>
 
                     {/* Desktop Nav */}
-                    <div className="hidden md:flex items-center space-x-8">
+                    <div className="hidden xl:flex items-center space-x-8">
                         {navItems.map((item) => (
                             <Link
                                 key={item.href}
@@ -84,7 +87,7 @@ export default function Navbar() {
                     </div>
 
                     {/* Cart & Auth */}
-                    <div className="hidden md:flex items-center space-x-4">
+                    <div className="hidden xl:flex items-center space-x-4">
                         <button
                             onClick={toggleCart}
                             className="relative p-2 text-white hover:text-primary transition-colors"
@@ -104,7 +107,7 @@ export default function Navbar() {
                                 </Link>
                                 {session.user.roles?.includes("ADMIN") && (
                                     <Link href="/admin">
-                                        <Button variant="neon" size="sm">Admin</Button>
+                                        <Button asDiv variant="neon" size="sm">Admin</Button>
                                     </Link>
                                 )}
                                 <Button variant="ghost" size="sm" onClick={() => signOut()}>
@@ -114,12 +117,12 @@ export default function Navbar() {
                         ) : (
                             <>
                                 <Link href="/login">
-                                    <Button variant="ghost" size="sm">
+                                    <Button asDiv variant="ghost" size="sm">
                                         Login
                                     </Button>
                                 </Link>
                                 <Link href="/register">
-                                    <Button variant="primary" size="sm">
+                                    <Button asDiv variant="primary" size="sm">
                                         Join Now
                                     </Button>
                                 </Link>
@@ -129,7 +132,7 @@ export default function Navbar() {
 
                     {/* Mobile Menu Button */}
                     <button
-                        className="md:hidden text-white"
+                        className="xl:hidden text-white"
                         onClick={() => setIsOpen(!isOpen)}
                     >
                         {isOpen ? <X /> : <Menu />}
@@ -142,44 +145,44 @@ export default function Navbar() {
                 {isOpen && (
                     <motion.div
                         initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
+                        animate={{ opacity: 1, height: "100vh" }}
                         exit={{ opacity: 0, height: 0 }}
-                        className="md:hidden bg-black/95 border-b border-white/10 overflow-hidden"
+                        className="xl:hidden fixed top-20 left-0 right-0 bottom-0 bg-black/95 backdrop-blur-xl border-t border-white/10 z-40 overflow-y-auto"
                     >
-                        <div className="container mx-auto px-4 py-8 flex flex-col space-y-4">
+                        <div className="container mx-auto px-4 py-8 flex flex-col space-y-6">
                             {navItems.map((item) => (
                                 <Link
                                     key={item.href}
                                     href={item.href}
                                     onClick={() => setIsOpen(false)}
-                                    className={`text-lg font-bold uppercase tracking-wide ${pathname === item.href ? "text-primary" : "text-white/70"
+                                    className={`text-2xl font-black uppercase tracking-widest transition-colors ${pathname === item.href ? "text-primary italic" : "text-white/70 hover:text-white"
                                         }`}
                                 >
                                     {item.name}
                                 </Link>
                             ))}
-                            <hr className="border-white/10" />
+                            <hr className="border-white/10 my-4" />
                             {session ? (
                                 <div className="flex flex-col gap-4">
                                     <div className="flex items-center justify-between">
-                                        <Link href="/profile" onClick={() => setIsOpen(false)} className="text-white font-bold">Profile</Link>
-                                        {session.user.roles?.includes("ADMIN") && (
-                                            <Link href="/admin" onClick={() => setIsOpen(false)}>
-                                                <Button variant="neon" size="sm">Admin Panel</Button>
-                                            </Link>
-                                        )}
+                                        <Link href="/profile" onClick={() => setIsOpen(false)} className="text-xl font-bold uppercase text-white hover:text-primary">Profile</Link>
                                     </div>
-                                    <Button variant="ghost" onClick={() => signOut()} className="w-full">Logout Protocol</Button>
+                                    {session.user.roles?.includes("ADMIN") && (
+                                        <Link href="/admin" onClick={() => setIsOpen(false)}>
+                                            <Button asDiv variant="neon" size="lg" className="w-full">Admin Panel</Button>
+                                        </Link>
+                                    )}
+                                    <Button variant="outline" onClick={() => signOut()} className="w-full">Logout Protocol</Button>
                                 </div>
                             ) : (
                                 <div className="flex flex-col space-y-4">
                                     <Link href="/login" onClick={() => setIsOpen(false)}>
-                                        <Button variant="ghost" className="w-full">
+                                        <Button asDiv variant="ghost" className="w-full text-lg h-12">
                                             Login
                                         </Button>
                                     </Link>
                                     <Link href="/register" onClick={() => setIsOpen(false)}>
-                                        <Button variant="primary" className="w-full">
+                                        <Button asDiv variant="primary" className="w-full text-lg h-12">
                                             Join Now
                                         </Button>
                                     </Link>
