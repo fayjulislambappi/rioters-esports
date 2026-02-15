@@ -8,26 +8,27 @@ import { ChevronDown } from "lucide-react";
 import { useState, useEffect } from "react";
 import NextImage from "next/image";
 
-interface HeroProps {
-    galleryImages: string[];
-    galleryStyle: string;
-    galleryMode: string;
-    slicedImageUrl: string;
-}
-
-export default function Hero({ galleryImages = [], galleryStyle = "ARCH", galleryMode = "INDIVIDUAL", slicedImageUrl = "" }: HeroProps) {
+export default function Hero({
+    galleryImages = [],
+    galleryStyle = "ARCH",
+    galleryMode = "INDIVIDUAL",
+    slicedImageUrl = "",
+    mobileHeroUrl = ""
+}: HeroProps) {
     const { status } = useSession();
     const [images, setImages] = useState<string[]>(galleryImages);
     const [style, setStyle] = useState(galleryStyle);
     const [mode, setMode] = useState(galleryMode);
     const [masterImage, setMasterImage] = useState(slicedImageUrl);
+    const [mobileImage, setMobileImage] = useState(mobileHeroUrl);
 
     useEffect(() => {
         if (galleryImages.length) setImages(galleryImages);
         if (galleryStyle) setStyle(galleryStyle);
         if (galleryMode) setMode(galleryMode);
         if (slicedImageUrl) setMasterImage(slicedImageUrl);
-    }, [galleryImages, galleryStyle, galleryMode, slicedImageUrl]);
+        if (mobileHeroUrl) setMobileImage(mobileHeroUrl);
+    }, [galleryImages, galleryStyle, galleryMode, slicedImageUrl, mobileHeroUrl]);
 
     const scrollToNext = () => {
         window.scrollTo({
@@ -60,15 +61,43 @@ export default function Hero({ galleryImages = [], galleryStyle = "ARCH", galler
             {/* Arched/Diamond Gallery Background */}
             {/* Arched/Diamond Gallery Background */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                {mode === "FULL" && masterImage ? (
+                {mode === "FULL" && (masterImage || mobileImage) ? (
                     <div className="absolute inset-0 w-full h-full overflow-hidden">
-                        <NextImage
-                            src={masterImage}
-                            alt="Hero Banner"
-                            fill
-                            className="object-cover opacity-60"
-                            priority
-                        />
+                        {/* Desktop Image */}
+                        {masterImage && (
+                            <div className={`${mobileImage ? 'hidden md:block' : 'block'} absolute inset-0 w-full h-full`}>
+                                <NextImage
+                                    src={masterImage}
+                                    alt="Hero Banner Desktop"
+                                    fill
+                                    className="object-cover opacity-60"
+                                    priority
+                                />
+                            </div>
+                        )}
+                        {/* Mobile Image */}
+                        {mobileImage ? (
+                            <div className="md:hidden absolute inset-0 w-full h-full">
+                                <NextImage
+                                    src={mobileImage}
+                                    alt="Hero Banner Mobile"
+                                    fill
+                                    className="object-cover opacity-60"
+                                    priority
+                                />
+                            </div>
+                        ) : masterImage && (
+                            /* Fallback to desktop image on mobile if no mobile-specific image is provided */
+                            <div className="md:hidden absolute inset-0 w-full h-full">
+                                <NextImage
+                                    src={masterImage}
+                                    alt="Hero Banner Mobile Fallback"
+                                    fill
+                                    className="object-cover opacity-60"
+                                    priority
+                                />
+                            </div>
+                        )}
                     </div>
                 ) : (
                     <div className="flex justify-center items-center gap-[var(--hero-gap)] flex-nowrap pt-0 md:pt-10">

@@ -17,6 +17,7 @@ export default function AdminSettingsPage() {
     const [galleryStyle, setGalleryStyle] = useState("ARCH"); // ARCH, EYE
     const [galleryMode, setGalleryMode] = useState("INDIVIDUAL"); // INDIVIDUAL, SLICED
     const [slicedImageUrl, setSlicedImageUrl] = useState("");
+    const [mobileHeroUrl, setMobileHeroUrl] = useState("");
 
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState("");
@@ -37,6 +38,7 @@ export default function AdminSettingsPage() {
                     if (data.galleryStyle) setGalleryStyle(data.galleryStyle);
                     if (data.galleryMode) setGalleryMode(data.galleryMode);
                     if (data.slicedImageUrl) setSlicedImageUrl(data.slicedImageUrl);
+                    if (data.mobileHeroUrl) setMobileHeroUrl(data.mobileHeroUrl);
                 }
             });
     }, []);
@@ -63,7 +65,8 @@ export default function AdminSettingsPage() {
                 galleryImages,
                 galleryStyle,
                 galleryMode,
-                slicedImageUrl
+                slicedImageUrl,
+                mobileHeroUrl
             }
         };
 
@@ -188,12 +191,24 @@ export default function AdminSettingsPage() {
                     {galleryMode === "SLICED" || galleryMode === "FULL" ? (
                         <div className="space-y-4">
                             <ImageUpload
-                                label="Master Sliced Image"
+                                label={galleryMode === "SLICED" ? "Master Sliced Image (Desktop)" : "Hero Image (Desktop)"}
                                 value={slicedImageUrl}
                                 onChange={setSlicedImageUrl}
                                 aspectRatio={16 / 9}
                             />
-                            <p className="text-xs text-gray-500">{galleryMode === "SLICED" ? "This image will be sliced across the gallery cards." : "This image will be shown as a full-screen cinematic banner."}</p>
+                            {galleryMode === "FULL" && (
+                                <ImageUpload
+                                    label="Hero Image (Mobile)"
+                                    value={mobileHeroUrl}
+                                    onChange={setMobileHeroUrl}
+                                    aspectRatio={9 / 16}
+                                />
+                            )}
+                            <p className="text-xs text-gray-500">
+                                {galleryMode === "SLICED"
+                                    ? "This image will be sliced across the gallery cards."
+                                    : "Optimized for high-energy cinematic presence. Desktop: 16:9 | Mobile: 9:16"}
+                            </p>
                         </div>
                     ) : (
                         <div className="space-y-6">

@@ -58,6 +58,7 @@ export default async function Home() {
         galleryStyle={settingsObj.galleryStyle}
         galleryMode={settingsObj.galleryMode}
         slicedImageUrl={settingsObj.slicedImageUrl}
+        mobileHeroUrl={settingsObj.mobileHeroUrl}
       />
 
       {/* Featured Games Section */}
