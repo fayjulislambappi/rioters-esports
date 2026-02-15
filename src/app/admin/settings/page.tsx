@@ -200,7 +200,13 @@ export default function AdminSettingsPage() {
                             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
                                 {galleryImages.map((url, index) => (
                                     <div key={index} className="relative group aspect-[2/3] bg-white/5 rounded-lg overflow-hidden border border-white/10">
-                                        <Image src={url} alt={`Gallery ${index}`} fill className="object-cover" />
+                                        {url ? (
+                                            <Image src={url} alt={`Gallery ${index}`} fill className="object-cover" />
+                                        ) : (
+                                            <div className="absolute inset-0 flex items-center justify-center text-white/5">
+                                                <ImageIcon className="w-12 h-12" />
+                                            </div>
+                                        )}
                                         <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
                                             <button
                                                 onClick={() => handleRemoveGalleryImage(index)}
