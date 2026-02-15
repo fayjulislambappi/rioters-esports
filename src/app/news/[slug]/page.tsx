@@ -162,8 +162,12 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ slug: 
                                 <Share2 className="w-3.5 h-3.5 md:w-4 md:h-4 mr-2 text-primary" /> Transmission
                             </h3>
                             <div className="grid grid-cols-2 gap-3 md:gap-4">
-                                <Button variant="outline" size="sm" className="w-full text-[10px] md:text-xs">Twitter</Button>
-                                <Button variant="outline" size="sm" className="w-full text-[10px] md:text-xs">Discord</Button>
+                                <a href="https://x.com/rioters_gamingX" target="_blank" rel="noopener noreferrer" className="block w-full">
+                                    <Button variant="outline" size="sm" className="w-full text-[10px] md:text-xs hover:bg-white hover:text-black transition-colors">X</Button>
+                                </a>
+                                <a href="https://discord.gg/chCdqeuF7a" target="_blank" rel="noopener noreferrer" className="block w-full">
+                                    <Button variant="outline" size="sm" className="w-full text-[10px] md:text-xs hover:bg-[#5865F2] hover:text-white transition-colors">Discord</Button>
+                                </a>
                             </div>
 
                             <div className="mt-8 pt-8 border-t border-white/5">

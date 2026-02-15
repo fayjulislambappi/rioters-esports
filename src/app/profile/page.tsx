@@ -524,7 +524,7 @@ export default function ProfilePage() {
                                                     <input
                                                         type="text"
                                                         className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-primary transition-colors font-bold"
-                                                        placeholder="Nexus City"
+                                                        placeholder="Rioters City"
                                                         value={address.city}
                                                         onChange={(e) => setAddress({ ...address, city: e.target.value })}
                                                     />

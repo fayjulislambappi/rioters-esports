@@ -84,6 +84,33 @@ export default function NewsPage() {
                     ))}
                 </div>
             )}
+            {/* Join Community CTA */}
+            {!loading && articles.length > 0 && (
+                <div className="mt-20 relative group">
+                    <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 via-blue-500/20 to-primary/20 rounded-[2rem] blur-xl opacity-30 group-hover:opacity-60 transition duration-1000"></div>
+                    <div className="relative bg-[#0a0a0a] border border-white/5 p-8 md:p-16 rounded-[2rem] text-center overflow-hidden">
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 blur-[100px] -mr-32 -mt-32" />
+                        <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-500/5 blur-[100px] -ml-32 -mb-32" />
+
+                        <div className="relative z-10 max-w-2xl mx-auto space-y-8">
+                            <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter leading-tight">
+                                Stay Synced with <br /> <span className="text-primary text-outline">The Intelligence Hub</span>
+                            </h2>
+                            <p className="text-white/40 font-bold uppercase tracking-[0.2em] text-xs md:text-sm">
+                                Join our official channels for real-time tournament alerts, <br className="hidden md:block" /> community events, and tactical field reports.
+                            </p>
+                            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                                <a href="https://discord.gg/chCdqeuF7a" target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto">
+                                    <Button variant="primary" className="w-full sm:px-12 py-6 h-auto text-lg">Join Discord</Button>
+                                </a>
+                                <a href="https://x.com/rioters_gamingX" target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto">
+                                    <Button variant="outline" className="w-full sm:px-12 py-6 h-auto text-lg hover:bg-white hover:text-black transition-all">Follow on X</Button>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

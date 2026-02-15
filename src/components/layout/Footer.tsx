@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Facebook, Youtube, Instagram, Twitter, Mail } from "lucide-react";
+import { Facebook, Youtube, Instagram, Twitter, MessageSquare, Mail } from "lucide-react";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 
@@ -43,6 +43,9 @@ export default function Footer() {
                             build teams, and rise to the top of the leaderboard.
                         </p>
                         <div className="flex space-x-4 justify-center md:justify-start">
+                            <a href="https://discord.gg/chCdqeuF7a" target="_blank" rel="noopener noreferrer" className="text-white/60 hover:text-[#5865F2] transition-colors">
+                                <MessageSquare className="w-5 h-5" />
+                            </a>
                             <a href="https://www.facebook.com/riotersgaming13/" target="_blank" rel="noopener noreferrer" className="text-white/60 hover:text-[#1877F2] transition-colors">
                                 <Facebook className="w-5 h-5" />
                             </a>
