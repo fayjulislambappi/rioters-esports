@@ -89,7 +89,7 @@ export default function ImageUpload({ value, onChange, label, aspectRatio = 1, o
             <div className="relative group items-center justify-center border-2 border-dashed border-white/10 rounded-xl p-4 bg-white/5 hover:border-primary/50 transition-colors">
                 {value && value.trim() !== "" ? (
                     <div
-                        className="relative w-full mx-auto rounded-lg overflow-hidden border border-white/10 shadow-lg bg-black/40"
+                        className="relative w-full max-w-[320px] mx-auto rounded-lg overflow-hidden border border-white/10 shadow-lg bg-black/40 max-h-[400px]"
                         style={{ aspectRatio: `${aspectRatio}` }}
                     >
                         <Image src={value} alt="Preview" fill className="object-cover" />
