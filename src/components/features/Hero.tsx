@@ -44,6 +44,9 @@ export default function Hero({ galleryImages = [], galleryStyle = "ARCH", galler
             // "Eye" (Diamond) style: Outer boxes scale down to form an eye shape
             const scale = 1 - (diff * 0.08);
             return { y: 0, scaleY: scale };
+        } else if (style === "RECTANGLE") {
+            // "Rectangle" style: No distortion, perfectly flat
+            return { y: 0, scaleY: 1 };
         } else {
             // "ARCH" style: Parabolic curve (Bridge) - reduced intensity for better fit
             const intensity = 2;

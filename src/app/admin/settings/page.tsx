@@ -166,6 +166,7 @@ export default function AdminSettingsPage() {
                             >
                                 <option value="ARCH">Arch (Bridge)</option>
                                 <option value="EYE">Eye (Diamond)</option>
+                                <option value="RECTANGLE">Rectangle (Full Image)</option>
                             </select>
                         </div>
                         <div className="space-y-2">
