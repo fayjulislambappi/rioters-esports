@@ -171,7 +171,7 @@ export default function Hero({
             <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent pointer-events-none z-10" />
 
             {/* Content Container */}
-            <div className="container px-4 text-center z-20 mt-auto mb-10 md:mb-32">
+            <div className="container px-4 text-center z-20 mt-auto mb-28 md:mb-32">
                 <motion.div
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}

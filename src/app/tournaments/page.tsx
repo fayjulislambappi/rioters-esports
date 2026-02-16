@@ -9,30 +9,41 @@ import Input from "@/components/ui/Input";
 
 import { motion, AnimatePresence } from "framer-motion"; // Added import
 
+export const dynamic = "force-dynamic";
+
 export default function TournamentsPage() {
     const [filter, setFilter] = useState("ALL");
-    const [isFilterOpen, setIsFilterOpen] = useState(false); // Added state
+    const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [tournaments, setTournaments] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    const fetchTournaments = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const res = await fetch("/api/admin/tournaments", { cache: "no-store" });
+            const data = await res.json();
+            if (res.ok) {
+                setTournaments(Array.isArray(data) ? data : []);
+            } else {
+                setError(data.error || "Failed to load tournaments");
+            }
+        } catch (error) {
+            console.error("Failed to fetch tournaments:", error);
+            setError("Something went wrong while fetching tournaments.");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        const fetchTournaments = async () => {
-            try {
-                const res = await fetch("/api/admin/tournaments");
-                const data = await res.json();
-                if (res.ok) {
-                    setTournaments(data);
-                }
-            } catch (error) {
-                console.error("Failed to fetch tournaments:", error);
-            } finally {
-                setLoading(false);
-            }
-        };
         fetchTournaments();
     }, []);
 
-    const filteredTournaments = tournaments.filter(t => filter === "ALL" || t.status === filter);
+    const filteredTournaments = Array.isArray(tournaments)
+        ? tournaments.filter(t => filter === "ALL" || t.status === filter)
+        : [];
 
     return (
         <div className="container mx-auto px-4 py-12">
@@ -46,45 +57,54 @@ export default function TournamentsPage() {
                     </p>
                 </div>
 
-                <div className="relative mt-6 md:mt-0 z-20">
-                    <div className="flex items-center space-x-2">
-                        <span className="text-sm font-bold uppercase text-white/60 mr-2 md:hidden">Filter:</span>
-                        <button
-                            onClick={() => setIsFilterOpen(!isFilterOpen)}
-                            className="flex items-center gap-2 bg-white/5 border border-white/10 px-4 py-2 rounded-lg hover:bg-white/10 transition-colors"
-                        >
-                            <Filter className="w-4 h-4 text-primary" />
-                            <span className="text-sm font-bold uppercase">{filter}</span>
-                        </button>
-                    </div>
-
-                    <AnimatePresence>
-                        {isFilterOpen && (
-                            <motion.div
-                                initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                                animate={{ opacity: 1, y: 0, scale: 1 }}
-                                exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                                className="absolute right-0 top-full mt-2 min-w-[200px] bg-black/90 backdrop-blur-xl border border-white/10 rounded-xl p-2 shadow-2xl flex flex-col gap-1"
+                <div className="flex items-center gap-4 mt-6 md:mt-0 z-20">
+                    <button
+                        onClick={fetchTournaments}
+                        className="p-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
+                        title="Refresh"
+                    >
+                        <Loader className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                    </button>
+                    <div className="relative">
+                        <div className="flex items-center space-x-2">
+                            <span className="text-sm font-bold uppercase text-white/60 mr-2 md:hidden">Filter:</span>
+                            <button
+                                onClick={() => setIsFilterOpen(!isFilterOpen)}
+                                className="flex items-center gap-2 bg-white/5 border border-white/10 px-4 py-2 rounded-lg hover:bg-white/10 transition-colors"
                             >
-                                {["ALL", "UPCOMING", "ONGOING", "COMPLETED"].map((status) => (
-                                    <button
-                                        key={status}
-                                        onClick={() => {
-                                            setFilter(status);
-                                            setIsFilterOpen(false);
-                                        }}
-                                        className={`w-full text-left px-4 py-3 rounded-lg text-xs font-bold uppercase transition-colors flex items-center justify-between ${filter === status
-                                            ? "bg-primary text-black"
-                                            : "text-white/60 hover:bg-white/5 hover:text-white"
-                                            }`}
-                                    >
-                                        {status}
-                                        {filter === status && <div className="w-2 h-2 rounded-full bg-black" />}
-                                    </button>
-                                ))}
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
+                                <Filter className="w-4 h-4 text-primary" />
+                                <span className="text-sm font-bold uppercase">{filter}</span>
+                            </button>
+                        </div>
+
+                        <AnimatePresence>
+                            {isFilterOpen && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                    className="absolute right-0 top-full mt-2 min-w-[200px] bg-black/90 backdrop-blur-xl border border-white/10 rounded-xl p-2 shadow-2xl flex flex-col gap-1"
+                                >
+                                    {["ALL", "UPCOMING", "ONGOING", "COMPLETED"].map((status) => (
+                                        <button
+                                            key={status}
+                                            onClick={() => {
+                                                setFilter(status);
+                                                setIsFilterOpen(false);
+                                            }}
+                                            className={`w-full text-left px-4 py-3 rounded-lg text-xs font-bold uppercase transition-colors flex items-center justify-between ${filter === status
+                                                ? "bg-primary text-black"
+                                                : "text-white/60 hover:bg-white/5 hover:text-white"
+                                                }`}
+                                        >
+                                            {status}
+                                            {filter === status && <div className="w-2 h-2 rounded-full bg-black" />}
+                                        </button>
+                                    ))}
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
                 </div>
             </div>
 
@@ -96,9 +116,15 @@ export default function TournamentsPage() {
                         </Card>
                     ))}
                 </div>
+            ) : error ? (
+                <div className="py-20 text-center border border-dashed border-red-500/20 rounded-2xl bg-red-500/5">
+                    <h2 className="text-xl font-bold uppercase text-red-400 mb-4">{error}</h2>
+                    <Button onClick={fetchTournaments} variant="outline" size="sm">Try Again</Button>
+                </div>
             ) : filteredTournaments.length === 0 ? (
                 <div className="py-20 text-center">
-                    <h2 className="text-2xl font-black uppercase text-white/10 italic">No tournaments in your proximity.</h2>
+                    <h2 className="text-2xl font-black uppercase text-white/10 italic">No tournaments found.</h2>
+                    <p className="text-white/40 mt-2">Try adjusting your filters or check back later.</p>
                 </div>
             ) : (
                 <div className="grid gap-6">

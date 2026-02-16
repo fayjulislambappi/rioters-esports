@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+export const dynamic = "force-dynamic";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/db";
@@ -7,21 +8,37 @@ import Game from "@/models/Game"; // Ensure Game is registered for population
 
 export async function GET() {
     try {
-        const session = await getServerSession(authOptions);
+        await connectDB();
+
+        // Try to get session, but handle failure gracefully for guests
+        let session = null;
+        try {
+            session = await getServerSession(authOptions);
+        } catch (e) {
+            console.error("Session fetch failed in tournament API:", e);
+        }
+
+        // If not admin, only show public tournaments (non-completed)
         if (!session || session.user.role !== "ADMIN") {
-            await connectDB();
-            const tournaments = await Tournament.find({ status: { $ne: "COMPLETED" } })
+            const tournaments = await Tournament.find({
+                status: { $in: ["UPCOMING", "ONGOING"] }
+            })
                 .populate("gameId", "title")
-                .sort({ startDate: 1 });
+                .sort({ startDate: 1 })
+                .lean();
+
             return NextResponse.json(tournaments);
         }
 
-        await connectDB();
+        // Admin sees everything
         const tournaments = await Tournament.find({})
             .populate("gameId", "title")
-            .sort({ createdAt: -1 });
+            .sort({ createdAt: -1 })
+            .lean();
+
         return NextResponse.json(tournaments);
     } catch (error: any) {
+        console.error("Tournament GET Error:", error);
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }
