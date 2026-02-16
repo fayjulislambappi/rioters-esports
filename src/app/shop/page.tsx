@@ -122,7 +122,7 @@ export default function ShopPage() {
                 </div>
 
                 {loading ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
                         {[...Array(8)].map((_, i) => (
                             <Card key={i} className="p-4 animate-pulse aspect-[3/4] flex items-center justify-center">
                                 <Loader className="w-8 h-8 animate-spin text-white/10" />
@@ -145,7 +145,7 @@ export default function ShopPage() {
                                         <div className="h-px w-full bg-gradient-to-r from-primary/30 to-transparent" />
                                     </div>
 
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                                    <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
                                         {items.map((product: any) => (
                                             <Card
                                                 key={product._id}
