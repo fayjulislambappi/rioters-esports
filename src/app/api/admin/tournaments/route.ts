@@ -4,11 +4,16 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/db";
 import Tournament from "@/models/Tournament";
-import Game from "@/models/Game"; // Ensure Game is registered for population
+import Game from "@/models/Game";
+import Team from "@/models/Team";
 
 export async function GET() {
     try {
         await connectDB();
+
+        // Explicitly reference models to ensure they are registered for population
+        // @ts-ignore
+        const _models = { Game, Team };
 
         // Try to get session, but handle failure gracefully for guests
         let session = null;
