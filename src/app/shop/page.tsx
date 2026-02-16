@@ -98,7 +98,7 @@ export default function ShopPage() {
     };
 
     return (
-        <main className="min-h-screen pt-32 pb-20 px-4">
+        <main className="min-h-screen pt-12 pb-20 px-4">
             <div className="max-w-7xl mx-auto">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
                     <div>

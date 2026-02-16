@@ -137,7 +137,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ slug: 
     };
 
     return (
-        <main className="min-h-screen pt-32 pb-20 px-4 bg-black">
+        <main className="min-h-screen pt-12 pb-20 px-4 bg-black">
             <div className="max-w-6xl mx-auto">
                 {/* Breadcrumbs */}
                 <nav className="flex items-center gap-2 mb-8 text-[10px] font-black uppercase tracking-widest text-white/40">
