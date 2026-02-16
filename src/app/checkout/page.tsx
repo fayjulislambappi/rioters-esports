@@ -99,7 +99,7 @@ export default function CheckoutPage() {
                                         <Image src={item.image} alt={item.name} fill className="object-cover" />
                                     </div>
                                     <div className="flex-1">
-                                        <p className="text-sm font-bold uppercase line-clamp-1">{item.name}</p>
+                                        <p className="text-sm font-bold uppercase">{item.name}</p>
                                         <div className="flex justify-between text-xs text-white/50 mt-1">
                                             <span>Qty: {item.quantity}</span>
                                             <span>{(item.price * item.quantity).toFixed(0)} Tk</span>

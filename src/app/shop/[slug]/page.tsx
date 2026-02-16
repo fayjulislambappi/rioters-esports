@@ -224,7 +224,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ slug: 
                                     </h3>
 
                                     {group.type === 'selection' ? (
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        <div className="grid grid-cols-2 sm:grid-cols-2 gap-3">
                                             {group.options?.map((opt: any) => {
                                                 const isSelected = selections[group.name]?.name === opt.name;
                                                 return (

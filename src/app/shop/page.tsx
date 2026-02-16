@@ -170,7 +170,7 @@ export default function ShopPage() {
 
                                                 <div className="p-4 flex flex-col flex-1">
                                                     <h3
-                                                        className="text-lg font-black uppercase line-clamp-1 mb-1 cursor-pointer hover:text-primary transition-colors"
+                                                        className="text-lg font-black uppercase mb-1 cursor-pointer hover:text-primary transition-colors"
                                                         onClick={() => router.push(`/shop/${product.slug || product._id}`)}
                                                     >
                                                         {product.name}
